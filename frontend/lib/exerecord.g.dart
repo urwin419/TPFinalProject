@@ -9,10 +9,9 @@ part of 'exerecord.dart';
 ExeRecord _$ExeRecordFromJson(Map<String, dynamic> json) {
   $checkKeys(
     json,
-    requiredKeys: const ['id', 'date', 'time', 'type', 'content'],
+    requiredKeys: const ['date', 'time', 'type', 'content'],
   );
   return ExeRecord(
-    json['id'] as String,
     json['date'] as String,
     json['time'] as String,
     json['type'] as String,
@@ -21,7 +20,6 @@ ExeRecord _$ExeRecordFromJson(Map<String, dynamic> json) {
 }
 
 Map<String, dynamic> _$ExeRecordToJson(ExeRecord instance) => <String, dynamic>{
-      'id': instance.id,
       'date': instance.date,
       'time': instance.time,
       'type': instance.type,

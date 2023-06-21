@@ -9,10 +9,9 @@ part of 'mealrecord.dart';
 MealRecord _$MealRecordFromJson(Map<String, dynamic> json) {
   $checkKeys(
     json,
-    requiredKeys: const ['id', 'date', 'time', 'meal'],
+    requiredKeys: const ['date', 'time', 'meal'],
   );
   return MealRecord(
-    json['id'] as String,
     json['date'] as String,
     json['time'] as String,
     json['meal'] as String,
@@ -21,7 +20,6 @@ MealRecord _$MealRecordFromJson(Map<String, dynamic> json) {
 
 Map<String, dynamic> _$MealRecordToJson(MealRecord instance) =>
     <String, dynamic>{
-      'id': instance.id,
       'date': instance.date,
       'time': instance.time,
       'meal': instance.meal,

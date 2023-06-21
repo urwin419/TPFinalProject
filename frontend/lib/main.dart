@@ -1,6 +1,7 @@
 // ignore_for_file: unused_import, library_private_types_in_public_api, use_build_context_synchronously
 
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:group_project/exerecord.dart';
@@ -15,14 +16,14 @@ import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 
 void main() => runApp(const MyApp());
 
-const serverUrl = '20.163.246.224:8080';
+const serverUrl = '16.162.26.133:5000';
 const List<String> meals = <String>["Breakfast", "Lunch", "Dinner"];
 const List<String> exes = <String>["Jogging", "Crunches", "Push-ups"];
-var token = '';
+var cookie = '';
 
 Future<List<ExeRecord>> fetchExe() async {
-  var url = Uri.http(serverUrl, '/get_exe', {'token': token});
-  final response = await http.get(url);
+  var url = Uri.http(serverUrl, '/get_exe');
+  final response = await http.get(url, headers: {'cookie': cookie});
   if (response.statusCode == 200) {
     List jsonResponse = json.decode(response.body)["data"];
     return jsonResponse.map((data) => ExeRecord.fromJson(data)).toList();
@@ -32,8 +33,8 @@ Future<List<ExeRecord>> fetchExe() async {
 }
 
 Future<List<MealRecord>> fetchMeal() async {
-  var url = Uri.http(serverUrl, '/get_meal', {'token': token});
-  final response = await http.get(url);
+  var url = Uri.http(serverUrl, '/get_meal');
+  final response = await http.get(url, headers: {'cookie': cookie});
   if (response.statusCode == 200) {
     List jsonResponse = json.decode(response.body)["data"];
     return jsonResponse.map((data) => MealRecord.fromJson(data)).toList();
@@ -43,8 +44,8 @@ Future<List<MealRecord>> fetchMeal() async {
 }
 
 Future<List<WeightRecord>> fetchWeight() async {
-  var url = Uri.http(serverUrl, '/get_wei', {'token': token});
-  final response = await http.get(url);
+  var url = Uri.http(serverUrl, '/get_wei');
+  final response = await http.get(url, headers: {'cookie': cookie});
   if (response.statusCode == 200) {
     List jsonResponse = json.decode(response.body)["data"];
     return jsonResponse.map((data) => WeightRecord.fromJson(data)).toList();
@@ -54,8 +55,11 @@ Future<List<WeightRecord>> fetchWeight() async {
 }
 
 Future<String> fetchAnalysis() async {
-  var url = Uri.http(serverUrl, '/get_chat', {'token': token});
-  Map<String, String>? userHeader = {'Connection': 'Keep-Alive'};
+  var url = Uri.http(serverUrl, '/get_chat');
+  Map<String, String>? userHeader = {
+    'Connection': 'Keep-Alive',
+    'cookie': cookie
+  };
   final response = await http.get(url, headers: userHeader);
   if (response.statusCode == 200) {
     String report =
@@ -75,7 +79,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: _title,
-      initialRoute: '/',
+      initialRoute: '/home',
       routes: {
         '/': (context) => const LoginPage(),
         '/home': (context) => const MyStatefulWidget(),
@@ -140,7 +144,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  late String _username, _password;
+  late String _email, _password;
   bool _isLoading = false;
 
   void _submit() async {
@@ -151,20 +155,26 @@ class _LoginPageState extends State<LoginPage> {
         _isLoading = true;
       });
 
-      var response = await http.post(Uri.http(serverUrl, '/post_login'),
-          body: {'username': _username, 'password': _password});
+      Map<String, dynamic> data = {'email': _email, 'password': _password};
+      String body = json.encode(data);
+
+      var response = await http.post(Uri.http(serverUrl, '/auth/login'),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: body);
 
       setState(() {
         _isLoading = false;
       });
-
+      if (kDebugMode) {
+        print(response.statusCode);
+      }
       if (response.statusCode == 200) {
-        var data = jsonDecode(response.body.toString());
-        if (data['status'] == 1) {
-          token = data['token'];
-          if (kDebugMode) {
-            print(response.body);
-          }
+        if (response.body == "Successfully login!") {
+          var header = response.headers['set-cookie'];
+          var cookies = header?.split(';')[0];
+          cookie = cookies!;
           Navigator.pushReplacementNamed(context, '/home');
         } else {
           showAutoHideAlertDialog(context,
@@ -194,7 +204,7 @@ class _LoginPageState extends State<LoginPage> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage("assets/images/login.png"),
+            image: AssetImage("assets/images/1.png"),
             fit: BoxFit.cover,
           ),
         ),
@@ -217,8 +227,9 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextFormField(
+                  initialValue: 'user1@gmail.com',
                   decoration: InputDecoration(
-                    labelText: 'Username',
+                    labelText: 'E-mail',
                     labelStyle: const TextStyle(
                       color: Colors.black,
                       fontSize: 18.0,
@@ -236,11 +247,12 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   validator: (value) =>
-                      value!.isEmpty ? 'Username is required' : null,
-                  onSaved: (value) => _username = value!.trim(),
+                      value!.isEmpty ? 'E-mail is required' : null,
+                  onSaved: (value) => _email = value!.trim(),
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
+                  initialValue: 'password',
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: const TextStyle(
@@ -259,7 +271,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  obscureText: true,
+                  obscureText: false,
                   validator: (value) =>
                       value!.isEmpty ? 'Password is required' : null,
                   onChanged: (value) => _password = value.trim(),
@@ -310,7 +322,7 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  late String _username, _password, _confirmPassword;
+  late String _email, _username, _password, _confirmPassword, _captcha;
   bool _isLoading = false;
 
   void _submit() async {
@@ -369,9 +381,21 @@ class _RegisterPageState extends State<RegisterPage> {
         return;
       }
 
+      Map<String, dynamic> data = {
+        'email': _email,
+        'username': _username,
+        'password': _password,
+        'captcha': _captcha
+      };
+
+      String body = json.encode(data);
+
       var response = await http.post(
-        Uri.http(serverUrl, '/post_register'),
-        body: {'username': _username, 'password': _password},
+        Uri.http(serverUrl, '/auth/register'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: body,
       );
 
       setState(() {
@@ -380,12 +404,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body.toString());
-        if (data['status'] == 1) {
-          token = data['token'];
-          if (kDebugMode) {
-            print(response.body);
-          }
-          Navigator.pushReplacementNamed(context, '/home');
+        if (response.body == "Successfully register!") {
+          Navigator.pushReplacementNamed(context, '/');
         } else if (data['status'] == 2) {
           showAutoHideAlertDialog(
               context, ["Registration failed", "Username already used"]);
@@ -417,7 +437,7 @@ class _RegisterPageState extends State<RegisterPage> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage("assets/images/login.png"),
+            image: AssetImage("assets/images/1.png"),
             fit: BoxFit.cover,
           ),
         ),
@@ -440,6 +460,32 @@ class _RegisterPageState extends State<RegisterPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextFormField(
+                  initialValue: 'userx@gmail.com',
+                  decoration: InputDecoration(
+                    labelText: 'E-mail',
+                    labelStyle: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 18.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                      borderSide: BorderSide(
+                        color: Colors.grey.shade300,
+                        width: 1.0,
+                      ),
+                    ),
+                  ),
+                  validator: (value) =>
+                      value!.isEmpty ? 'E-mail is required' : null,
+                  onChanged: (value) => _email = value.trim(),
+                ),
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  initialValue: 'userx',
                   decoration: InputDecoration(
                     labelText: 'Username',
                     labelStyle: const TextStyle(
@@ -464,6 +510,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
+                  initialValue: 'aa111111',
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: const TextStyle(
@@ -499,6 +546,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
+                  initialValue: 'aa111111',
                   decoration: InputDecoration(
                     labelText: 'Confirm Password',
                     labelStyle: const TextStyle(
@@ -527,6 +575,31 @@ class _RegisterPageState extends State<RegisterPage> {
                     return null;
                   },
                   onChanged: (value) => _confirmPassword = value.trim(),
+                ),
+                const SizedBox(height: 32.0),
+                TextFormField(
+                  initialValue: '0000',
+                  decoration: InputDecoration(
+                    labelText: 'Captcha',
+                    labelStyle: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 18.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                      borderSide: BorderSide(
+                        color: Colors.grey.shade300,
+                        width: 1.0,
+                      ),
+                    ),
+                  ),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Username is required' : null,
+                  onChanged: (value) => _username = value.trim(),
                 ),
                 const SizedBox(height: 32.0),
                 ElevatedButton(
@@ -562,19 +635,27 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   String selectedexe = exes.first;
   int _selectedIndex = 0;
   String _operation = 'record weight';
-  bool _isLoading = false;
-
-  final List<String> entries1 = <String>[
-    'record weight',
-    'record meal',
-    'record exercise'
+  // ignore: unused_field
+  String _searchText = '';
+  final List<String> _images = [
+    'assets/images/meal.jpg',
+    'assets/images/water.jpg',
+    'assets/images/weight.jpg',
+    'assets/images/sleep.jpg',
+    'assets/images/exe.jpg',
   ];
+  final List<String> _searchHistory = [
+    'Search history 1',
+    'Search history 2',
+    'Search history 3'
+  ];
+  final List<String> entries1 = <String>['Weight', 'Meal', 'Exercise'];
   final List<String> entries2 = <String>[
     'weight records',
     'meal records',
     'exercise records'
   ];
-  final List<String> entries3 = <String>['profile', 'logout'];
+  final List<String> entries3 = <String>['Plans', 'Profile', 'Logout'];
 
   void updateText(String text) {
     setState(() {
@@ -589,72 +670,64 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   Widget _record() {
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: entries1.length,
-      itemBuilder: (BuildContext context, int index) {
-        return GestureDetector(
-          child: Container(
-            decoration: BoxDecoration(
-              image: const DecorationImage(
-                image: AssetImage("assets/images/login.png"),
-                fit: BoxFit.cover,
+    return GridView.count(
+      padding:
+          const EdgeInsets.fromLTRB(20, 40, 20, 40), // 设置上下各40，左右各20像素的空白边缘
+      crossAxisSpacing: 20.0, // 列之间的空隙
+      mainAxisSpacing: 20.0,
+      crossAxisCount: 2, // 两列
+      childAspectRatio: 1.0, // 宽高比为1:1
+      children: <Widget>[
+        _buildButton('MEAL', _images[0], 'meal'),
+        _buildButton('WATER', _images[1], 'meal'),
+        _buildButton('WEIGHT', _images[2], 'wei'),
+        _buildButton('SLEEP', _images[3], 'wei'),
+        _buildButton('EXERCISE', _images[4], 'exe'),
+      ],
+    );
+  }
+
+  Widget _buildButton(String title, String image, String w) {
+    return Card(
+      child: InkWell(
+        onTap: () {
+          switch (w) {
+            case 'wei':
+              weidialog(context);
+              break;
+            case 'meal':
+              mealdialog(context, selectedMeal, meals);
+              break;
+            case 'exe':
+              exedialog(context, selectedexe, exes);
+              break;
+          }
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(image),
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
-              color: Colors.blue[300],
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
-                )
-              ],
             ),
-            width: double.infinity,
-            height: 120.0,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Feather.plus_circle,
-                    color: Colors.black,
-                    size: 40.0,
-                  ),
-                  const SizedBox(
-                    height: 8.0,
-                  ),
-                  Text(
-                    ' ${entries1[index]}',
-                    textScaleFactor: 2,
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 10),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-          onTap: () {
-            updateText(entries1[index]);
-            switch (_operation) {
-              case 'record weight':
-                weidialog(context);
-                break;
-              case 'record meal':
-                mealdialog(context, selectedMeal, meals);
-                break;
-              case 'record exercise':
-                exedialog(context, selectedexe, exes);
-                break;
-            }
-          },
-        );
-      },
-      separatorBuilder: (BuildContext context, int index) => const SizedBox(
-        height: 16,
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
@@ -754,54 +827,92 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                 const Divider(),
           ),
         ),
-        Container(
-          padding: const EdgeInsets.all(48.0),
-          child: SizedBox(
-            width: 76.0,
-            height: 76.0,
-            child: ClipOval(
-              child: Material(
-                color: Colors.black,
-                child: InkWell(
-                  splashColor: Colors.white,
-                  onTap: () {},
-                  child: _aiAnalysis(),
-                ),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
 
-  Widget _aiAnalysis() {
-    return IconButton(
-      icon: const Icon(Icons.analytics, color: Colors.white, size: 48.0),
-      onPressed: () async {
-        setState(() {
-          _isLoading = true;
-        });
-        final result = await fetchAnalysis();
-        setState(() {
-          _isLoading = false;
-        });
-        showDialog(
-          context: context,
-          builder: (_) => SingleChildScrollView(
-            child: AlertDialog(
-              title: const Text('AI Report'),
-              content: Text(result),
-              actions: [
-                TextButton(
-                  child: const Text('Close'),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
+  void _searchTextChanged(String newValue) {
+    setState(() {
+      _searchText = newValue;
+    });
+  }
+
+  void _showSearchResult(String item) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Search Result'),
+        content: Text('You tapped on: $item'),
+        actions: [
+          TextButton(
+            child: const Text('Close'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _assistant() {
+    return Column(
+      children: [
+        // Header
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: const Text(
+            'Your AI Assistant',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
             ),
           ),
-        );
-      },
+        ),
+        // Search input
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.grey,
+            ),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: TextField(
+            onChanged: _searchTextChanged,
+            decoration: const InputDecoration(
+              icon: Icon(Icons.search),
+              hintText: 'Search',
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+        // Search history
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            child: ListView.builder(
+              itemCount: _searchHistory.length,
+              itemBuilder: (BuildContext context, int index) {
+                final item = _searchHistory[index];
+                return InkWell(
+                  onTap: () {
+                    _showSearchResult(item);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Colors.grey)),
+                    ),
+                    child: Text(item),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -833,7 +944,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             onTap: () {
               if (index == 1) {
                 Navigator.pushReplacementNamed(context, '/');
-                token = "";
+                cookie = "";
               }
             },
             child: Center(
@@ -841,7 +952,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                 ' ${entries3[index]}',
                 textScaleFactor: 2,
                 style: TextStyle(
-                  color: index == 1 ? Colors.red : Colors.black,
+                  color: index == 2 ? Colors.red : Colors.black,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -858,6 +969,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     final List<Widget> children = [
       _record(),
       _past(),
+      _assistant(),
       _profile(),
     ];
     return Scaffold(
@@ -876,32 +988,35 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             ),
             child: children[_selectedIndex],
           ),
-          if (_isLoading)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        fixedColor: Colors.amber,
+        backgroundColor: Colors.blue,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.subject),
+            backgroundColor: Colors.blue,
             label: 'Now',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.view_list),
+            backgroundColor: Colors.blue,
             label: 'Past',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.view_list),
+            backgroundColor: Colors.blue,
+            label: 'Assistent',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.account_circle),
+            backgroundColor: Colors.blue,
             label: 'Me',
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
+        //selectedItemColor: Colors.amber[800],
         onTap: onTabTapped,
       ),
     );

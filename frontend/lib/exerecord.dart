@@ -4,10 +4,8 @@ part 'exerecord.g.dart';
 
 @JsonSerializable()
 class ExeRecord {
-  ExeRecord(this.id, this.date, this.time, this.type, this.content);
+  ExeRecord(this.date, this.time, this.type, this.content);
 
-  @JsonKey(required: true)
-  String id;
   @JsonKey(required: true)
   String date;
   @JsonKey(required: true)

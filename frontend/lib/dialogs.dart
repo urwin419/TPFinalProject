@@ -90,12 +90,13 @@ weidialog(context) {
               onPressed: () async {
                 var date = dateController.text;
                 var weight = weightController.text;
-                var record = WeightRecord(token, date, weight);
+                var record = WeightRecord(date, weight);
                 final String body = jsonEncode(record);
-                final url = Uri.http(serverUrl, '/rec_wei', {'token': token});
+                final url = Uri.http(serverUrl, '/rec_wei');
                 final response = await http.post(url,
                     headers: <String, String>{
                       'Content-Type': 'application/json; charset=UTF-8',
+                      'cookie': cookie
                     },
                     body: body);
                 if (!context.mounted) return;
@@ -256,12 +257,16 @@ mealdialog(context, selectedValue, meals) {
               onPressed: () async {
                 var date = dateController.text;
                 var time = timeController.text;
-                var record = MealRecord(token, date, time, selectedValue);
+                var record = MealRecord(date, time, selectedValue);
                 final String body = jsonEncode(record);
-                final url = Uri.http(serverUrl, '/rec_meal', {'token': token});
+                final url = Uri.http(
+                  serverUrl,
+                  '/rec_meal',
+                );
                 final response = await http.post(url,
                     headers: <String, String>{
                       'Content-Type': 'application/json; charset=UTF-8',
+                      'cookie': cookie
                     },
                     body: body);
                 if (!context.mounted) return;
@@ -487,7 +492,7 @@ exedialog(context, selectedexe, exes) {
                                           onPressed: () {
                                             execontentdia(
                                                 context,
-                                                token,
+                                                cookie,
                                                 dateController,
                                                 timeController,
                                                 selectedexe,
@@ -512,7 +517,7 @@ exedialog(context, selectedexe, exes) {
       });
 }
 
-execontentdia(context, token, dateController, timeController, selectedexe,
+execontentdia(context, cookie, dateController, timeController, selectedexe,
     contentController) {
   var suffix = 'KM';
   var ico = const Icon(Icons.directions_run);
@@ -578,12 +583,13 @@ execontentdia(context, token, dateController, timeController, selectedexe,
                 var time = timeController.text;
                 var type = selectedexe;
                 var content = contentController.text;
-                var record = ExeRecord(token, date, time, type, content);
+                var record = ExeRecord(date, time, type, content);
                 final String body = jsonEncode(record);
-                final url = Uri.http(serverUrl, '/rec_exe', {'token': token});
+                final url = Uri.http(serverUrl, '/rec_exe');
                 final response = await http.post(url,
                     headers: <String, String>{
                       'Content-Type': 'application/json; charset=UTF-8',
+                      'cookie': cookie
                     },
                     body: body);
                 if (!context.mounted) return;
@@ -612,7 +618,9 @@ execontentdia(context, token, dateController, timeController, selectedexe,
                       actions: <TextButton>[
                         TextButton(
                           onPressed: () {
-                            Navigator.pop(context);
+                            Navigator.of(context).popUntil(
+                              (route) => route.isFirst,
+                            );
                           },
                           child: const Text('Close'),
                         )
