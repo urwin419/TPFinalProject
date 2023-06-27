@@ -17,6 +17,7 @@ dependencies:
   intl: ^0.18.0
   json_annotation: ^4.8.0
   number_text_input_formatter: ^1.0.0+1
+  shared_preferences: ^2.1.2
 
 dev_dependencies:
   flutter_test:

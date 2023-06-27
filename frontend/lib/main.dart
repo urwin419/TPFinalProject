@@ -1,4 +1,4 @@
-// ignore_for_file: unused_import, library_private_types_in_public_api, use_build_context_synchronously
+// ignore_for_file: unused_import, library_private_types_in_public_api, use_build_context_synchronously, invalid_use_of_visible_for_testing_member
 
 import 'dart:convert';
 import 'dart:io';
@@ -13,13 +13,24 @@ import 'package:http/http.dart' as http;
 import 'package:group_project/dialogs.dart';
 import 'recview.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
-
-void main() => runApp(const MyApp());
+import 'package:shared_preferences/shared_preferences.dart';
 
 const serverUrl = '16.162.26.133:5000';
 const List<String> meals = <String>["Breakfast", "Lunch", "Dinner"];
 const List<String> exes = <String>["Jogging", "Crunches", "Push-ups"];
 var cookie = '';
+var isLoggedIn = false;
+//void main() => runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences.setMockInitialValues({});
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: isLoggedIn == false ? const LoginPage() : const MyStatefulWidget(),
+  ));
+}
 
 Future<List<ExeRecord>> fetchExe() async {
   var url = Uri.http(serverUrl, '/get_exe');
@@ -72,14 +83,13 @@ Future<String> fetchAnalysis() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
-  static const String _title = 'Flutter Code Sample';
+  static const String _title = 'Our App';
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: _title,
-      initialRoute: '/home',
+      initialRoute: '/',
       routes: {
         '/': (context) => const LoginPage(),
         '/home': (context) => const MyStatefulWidget(),
@@ -174,6 +184,8 @@ class _LoginPageState extends State<LoginPage> {
         if (response.body == "Successfully login!") {
           var header = response.headers['set-cookie'];
           var cookies = header?.split(';')[0];
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('isLoggedIn', true);
           cookie = cookies!;
           Navigator.pushReplacementNamed(context, '/home');
         } else {
@@ -403,12 +415,11 @@ class _RegisterPageState extends State<RegisterPage> {
       });
 
       if (response.statusCode == 200) {
-        var data = jsonDecode(response.body.toString());
         if (response.body == "Successfully register!") {
           Navigator.pushReplacementNamed(context, '/');
-        } else if (data['status'] == 2) {
+        } else if (response.body == "Successfully register!") {
           showAutoHideAlertDialog(
-              context, ["Registration failed", "Username already used"]);
+              context, ["Registration failed", "Email has been registered!"]);
         } else {
           showAutoHideAlertDialog(
               context, ["Registration failed", "Invalid username or password"]);
@@ -942,7 +953,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           ),
           child: GestureDetector(
             onTap: () {
-              if (index == 1) {
+              if (index == 2) {
                 Navigator.pushReplacementNamed(context, '/');
                 cookie = "";
               }
