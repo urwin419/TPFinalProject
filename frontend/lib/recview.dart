@@ -7,6 +7,7 @@ import 'package:group_project/exerecord.dart';
 import 'package:intl/intl.dart';
 import 'package:number_text_input_formatter/number_text_input_formatter.dart';
 import 'mealrecord.dart';
+import 'request.dart';
 import 'weightrecord.dart';
 import 'package:http/http.dart' as http;
 import 'package:group_project/dialogs.dart';

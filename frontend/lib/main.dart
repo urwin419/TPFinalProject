@@ -1,4 +1,4 @@
-// ignore_for_file: unused_import, library_private_types_in_public_api, use_build_context_synchronously, invalid_use_of_visible_for_testing_member
+// ignore_for_file: unused_import, library_private_types_in_public_api, use_build_context_synchronously, invalid_use_of_visible_for_testing_member, unused_field
 
 import 'dart:convert';
 import 'dart:io';
@@ -14,72 +14,21 @@ import 'package:group_project/dialogs.dart';
 import 'recview.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:group_project/plan.dart';
 
 const serverUrl = '16.162.26.133:5000';
 const List<String> meals = <String>["Breakfast", "Lunch", "Dinner"];
 const List<String> exes = <String>["Jogging", "Crunches", "Push-ups"];
 var cookie = '';
 var isLoggedIn = false;
-//void main() => runApp(const MyApp());
-Future<void> main() async {
+void main() => runApp(const MyApp());
+/*Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-  runApp(MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: isLoggedIn == false ? const LoginPage() : const MyStatefulWidget(),
-  ));
-}
-
-Future<List<ExeRecord>> fetchExe() async {
-  var url = Uri.http(serverUrl, '/get_exe');
-  final response = await http.get(url, headers: {'cookie': cookie});
-  if (response.statusCode == 200) {
-    List jsonResponse = json.decode(response.body)["data"];
-    return jsonResponse.map((data) => ExeRecord.fromJson(data)).toList();
-  } else {
-    throw Exception('Unexpected error occured!');
-  }
-}
-
-Future<List<MealRecord>> fetchMeal() async {
-  var url = Uri.http(serverUrl, '/get_meal');
-  final response = await http.get(url, headers: {'cookie': cookie});
-  if (response.statusCode == 200) {
-    List jsonResponse = json.decode(response.body)["data"];
-    return jsonResponse.map((data) => MealRecord.fromJson(data)).toList();
-  } else {
-    throw Exception('Unexpected error occured!');
-  }
-}
-
-Future<List<WeightRecord>> fetchWeight() async {
-  var url = Uri.http(serverUrl, '/get_wei');
-  final response = await http.get(url, headers: {'cookie': cookie});
-  if (response.statusCode == 200) {
-    List jsonResponse = json.decode(response.body)["data"];
-    return jsonResponse.map((data) => WeightRecord.fromJson(data)).toList();
-  } else {
-    throw Exception('Unexpected error occured!');
-  }
-}
-
-Future<String> fetchAnalysis() async {
-  var url = Uri.http(serverUrl, '/get_chat');
-  Map<String, String>? userHeader = {
-    'Connection': 'Keep-Alive',
-    'cookie': cookie
-  };
-  final response = await http.get(url, headers: userHeader);
-  if (response.statusCode == 200) {
-    String report =
-        json.decode(response.body)["data"]["choices"][0]["text"].substring(1);
-    return report;
-  } else {
-    throw Exception('Unexpected error occured!');
-  }
-}
+  isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+  runApp(const MyApp());
+}*/
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -88,12 +37,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      //home: isLoggedIn == false ? const LoginPage() : const MyStatefulWidget(),
       title: _title,
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginPage(),
-        '/home': (context) => const MyStatefulWidget(),
+        '/home': (context) => const MyStatefulWidget(
+              initialWidget: 'A',
+            ),
         '/register': (context) => const RegisterPage(),
+        '/plan': (context) => const PlanPage(),
       },
     );
   }
@@ -139,8 +92,8 @@ showAutoHideAlertDialog(BuildContext context, List<String> texts) {
 }
 
 class MyStatefulWidget extends StatefulWidget {
-  const MyStatefulWidget({super.key});
-
+  const MyStatefulWidget({super.key, required this.initialWidget});
+  final String initialWidget;
   @override
   State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
 }
@@ -264,7 +217,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
-                  initialValue: 'password',
+                  initialValue: 'passwor',
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: const TextStyle(
@@ -645,8 +598,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   String selectedMeal = meals.first;
   String selectedexe = exes.first;
   int _selectedIndex = 0;
+  late Widget selectedWidget;
   String _operation = 'record weight';
-  // ignore: unused_field
   String _searchText = '';
   final List<String> _images = [
     'assets/images/meal.jpg',
@@ -667,6 +620,30 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     'exercise records'
   ];
   final List<String> entries3 = <String>['Plans', 'Profile', 'Logout'];
+  int healthScore = 75; // 用户的健康评分
+  List<double> weightRecords = [70, 72.5, 69.8]; // 体重记录
+  double get latestWeight => weightRecords.isNotEmpty ? weightRecords.first : 0;
+  List<String> dietRecords = [
+    "Breakfast: Eggs and toast",
+    "Lunch: Salad",
+    "Dinner: Grilled chicken"
+  ]; // 饮食记录
+  List<String> exerciseRecords = ["Morning run", "Afternoon yoga"]; // 运动记录
+  List<int> waterRecords = [200, 300, 250]; // 饮水记录
+  List<int> sleepRecords = [7, 6, 8];
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialWidget == 'A') {
+      selectedWidget = _record();
+    } else if (widget.initialWidget == 'B') {
+      selectedWidget = _past();
+    } else if (widget.initialWidget == 'C') {
+      selectedWidget = _assistant();
+    } else if (widget.initialWidget == 'D') {
+      selectedWidget = _profile();
+    }
+  }
 
   void updateText(String text) {
     setState(() {
@@ -674,9 +651,19 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     });
   }
 
-  void onTabTapped(int index) {
+  void _onNavItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+
+      if (index == 0) {
+        selectedWidget = _record();
+      } else if (index == 1) {
+        selectedWidget = _past();
+      } else if (index == 2) {
+        selectedWidget = _assistant();
+      } else if (index == 3) {
+        selectedWidget = _profile();
+      }
     });
   }
 
@@ -744,101 +731,91 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   Widget _past() {
-    return Column(
+    return ListView(
+      padding: const EdgeInsets.all(16),
       children: [
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: entries2.length,
-            itemBuilder: (BuildContext context, int index) {
-              IconData icon;
-              switch (entries2[index]) {
-                case 'weight records':
-                  icon = Icons.scale;
-                  break;
-                case 'meal records':
-                  icon = Icons.fastfood;
-                  break;
-                case 'exercise records':
-                  icon = Icons.fitness_center;
-                  break;
-                default:
-                  icon = Icons.category;
-                  break;
-              }
-              return GestureDetector(
-                onTap: () {
-                  updateText(entries2[index]);
-                  switch (_operation) {
-                    case 'weight records':
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const WeiRec()),
-                      );
-                      break;
-                    case 'meal records':
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const MealRec()),
-                      );
-                      break;
-                    case 'exercise records':
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const ExeRec()),
-                      );
-                      break;
-                  }
-                },
-                child: Container(
-                  width: 200.0,
-                  height: 120.0,
-                  decoration: BoxDecoration(
-                    image: const DecorationImage(
-                      image: AssetImage("assets/images/login.png"),
-                      fit: BoxFit.cover,
-                    ),
-                    color: Colors.blue[300],
-                    borderRadius: BorderRadius.circular(12.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        icon,
-                        color: Colors.black,
-                        size: 40.0,
-                      ),
-                      const SizedBox(
-                        height: 8.0,
-                      ),
-                      Text(
-                        ' ${entries2[index]}',
-                        textScaleFactor: 2,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-            separatorBuilder: (BuildContext context, int index) =>
-                const Divider(),
-          ),
+        _buildHealthScoreModule(),
+        _buildRecordModule(
+          label: 'Weight',
+          value: latestWeight.toString(),
+          records: weightRecords.map((weight) => weight.toString()).toList(),
+        ),
+        _buildRecordModule(
+          label: 'Diet',
+          value: dietRecords.first,
+          records: dietRecords,
+        ),
+        _buildRecordModule(
+          label: 'Exercise',
+          value: exerciseRecords.first,
+          records: exerciseRecords,
+        ),
+        _buildRecordModule(
+          label: 'Water',
+          value: waterRecords.first.toString(),
+          records: waterRecords.map((amount) => amount.toString()).toList(),
+        ),
+        _buildRecordModule(
+          label: 'Sleep',
+          value: sleepRecords.first.toString(),
+          records: sleepRecords.map((hours) => '$hours hours').toList(),
         ),
       ],
+    );
+  }
+
+  Widget _buildHealthScoreModule() {
+    Color numberColor = healthScore >= 75 ? Colors.green : Colors.red;
+    return Card(
+      child: ListTile(
+        title: const Text(
+          'Health Score',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        trailing: Text(
+          healthScore.toString(),
+          style: TextStyle(
+            color: numberColor,
+            fontSize: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecordModule(
+      {required String label,
+      required String value,
+      required List<String> records}) {
+    return Card(
+      child: ListTile(
+        title: Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Latest: $value',
+              style: const TextStyle(
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              child: const Text('View all'),
+              onPressed: () {
+                // TODO: Navigate to detailed record page
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -957,6 +934,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                 Navigator.pushReplacementNamed(context, '/');
                 cookie = "";
               }
+              if (index == 0) {
+                Navigator.pushReplacementNamed(context, '/plan');
+              }
             },
             child: Center(
               child: Text(
@@ -977,12 +957,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> children = [
-      _record(),
-      _past(),
-      _assistant(),
-      _profile(),
-    ];
     return Scaffold(
       appBar: AppBar(
         title: const Text('RecFit System'),
@@ -997,7 +971,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                 fit: BoxFit.cover,
               ),
             ),
-            child: children[_selectedIndex],
+            child: selectedWidget,
           ),
         ],
       ),
@@ -1028,7 +1002,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         ],
         currentIndex: _selectedIndex,
         //selectedItemColor: Colors.amber[800],
-        onTap: onTabTapped,
+        onTap: _onNavItemTapped,
       ),
     );
   }
