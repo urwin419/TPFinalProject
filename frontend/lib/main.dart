@@ -1,5 +1,6 @@
 // ignore_for_file: unused_import, library_private_types_in_public_api, use_build_context_synchronously, invalid_use_of_visible_for_testing_member, unused_field
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -15,6 +16,9 @@ import 'recview.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:group_project/plan.dart';
+import 'package:email_validator/email_validator.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart';
 
 const serverUrl = '16.162.26.133:5000';
 const List<String> meals = <String>["Breakfast", "Lunch", "Dinner"];
@@ -107,7 +111,10 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  late String _email, _password;
+  final TextEditingController _emailController =
+      TextEditingController(text: 'user1@gmail.com');
+  final TextEditingController _passwordController =
+      TextEditingController(text: 'password');
   bool _isLoading = false;
 
   void _submit() async {
@@ -118,7 +125,10 @@ class _LoginPageState extends State<LoginPage> {
         _isLoading = true;
       });
 
-      Map<String, dynamic> data = {'email': _email, 'password': _password};
+      Map<String, dynamic> data = {
+        'email': _emailController.text,
+        'password': _passwordController.text
+      };
       String body = json.encode(data);
 
       var response = await http.post(Uri.http(serverUrl, '/auth/login'),
@@ -191,57 +201,65 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                TextFormField(
-                  initialValue: 'user1@gmail.com',
-                  decoration: InputDecoration(
-                    labelText: 'E-mail',
-                    labelStyle: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade300,
-                        width: 1.0,
+                SizedBox(
+                  width: double.infinity,
+                  height: 80,
+                  child: Expanded(
+                    child: TextFormField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        labelText: 'EMAIL',
+                        labelStyle: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.0,
+                          ),
+                        ),
                       ),
+                      validator: (value) =>
+                          value!.isEmpty ? 'EMAIL IS REQUIRED' : null,
                     ),
                   ),
-                  validator: (value) =>
-                      value!.isEmpty ? 'E-mail is required' : null,
-                  onSaved: (value) => _email = value!.trim(),
                 ),
-                const SizedBox(height: 16.0),
-                TextFormField(
-                  initialValue: 'passwor',
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    labelStyle: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade300,
-                        width: 1.0,
+                SizedBox(
+                  width: double.infinity,
+                  height: 80,
+                  child: Expanded(
+                    child: TextFormField(
+                      controller: _passwordController,
+                      decoration: InputDecoration(
+                        labelText: 'PASSWORD',
+                        labelStyle: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.0,
+                          ),
+                        ),
                       ),
+                      obscureText: true,
+                      validator: (value) =>
+                          value!.isEmpty ? 'PASSWORD IS REQUIRED' : null,
                     ),
                   ),
-                  obscureText: false,
-                  validator: (value) =>
-                      value!.isEmpty ? 'Password is required' : null,
-                  onChanged: (value) => _password = value.trim(),
                 ),
-                const SizedBox(height: 24.0),
                 ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all(Colors.black),
@@ -256,7 +274,7 @@ class _LoginPageState extends State<LoginPage> {
                     padding:
                         EdgeInsets.symmetric(vertical: 16.0, horizontal: 32.0),
                     child: Text(
-                      'Login',
+                      'LOG IN',
                       style: TextStyle(
                         fontSize: 20.0,
                         fontWeight: FontWeight.bold,
@@ -265,11 +283,19 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-                TextButton(
+                ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(Colors.blueGrey),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                  ),
                   onPressed: () {
                     Navigator.pushNamed(context, '/register');
                   },
-                  child: const Text('Register'),
+                  child: const Text('REGISTER'),
                 ),
               ],
             ),
@@ -287,8 +313,99 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  late String _email, _username, _password, _confirmPassword, _captcha;
   bool _isLoading = false;
+  final TextEditingController _emailController =
+      TextEditingController(text: 'hzj20010425@163.com');
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  final TextEditingController _verificationCodeController =
+      TextEditingController();
+  bool _isEmailValid = true;
+
+  // 邮箱验证逻辑
+  void _validateEmail(String email) {
+    bool isValid = EmailValidator.validate(email);
+
+    setState(() {
+      _isEmailValid = isValid;
+    });
+  }
+
+  bool _isCoolingDown = false;
+  int _coolDownTime = 60;
+  Timer? _timer;
+  void startCoolDown() {
+    setState(() {
+      _isCoolingDown = true;
+      _coolDownTime = 60;
+    });
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() {
+        _coolDownTime -= 1;
+      });
+
+      if (_coolDownTime <= 0) {
+        _timer?.cancel();
+        setState(() {
+          _isCoolingDown = false;
+        });
+      }
+    });
+  }
+
+  void sendVerificationCode() async {
+    if (_emailController.text.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('HINT'),
+          content: const Text('EMAIL IS EMPTY'),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('COMFIRM'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      try {
+        await Future.delayed(const Duration(seconds: 2));
+        startCoolDown();
+      } catch (e) {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('FAILED'),
+            content: const Text('CAPTCHA SENDING FAILED，PLEASE TRY AGAIN'),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('CONFIRM'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _verificationCodeController.dispose();
+    super.dispose();
+  }
 
   void _submit() async {
     final form = _formKey.currentState;
@@ -299,7 +416,7 @@ class _RegisterPageState extends State<RegisterPage> {
       });
 
       // Password validation
-      if (_password != _confirmPassword) {
+      if (_passwordController.text != _confirmPasswordController.text) {
         setState(() {
           _isLoading = false;
         });
@@ -321,7 +438,7 @@ class _RegisterPageState extends State<RegisterPage> {
           },
         );
         return;
-      } else if (_password.length < 8) {
+      } else if (_passwordController.text.length < 8) {
         setState(() {
           _isLoading = false;
         });
@@ -347,10 +464,11 @@ class _RegisterPageState extends State<RegisterPage> {
       }
 
       Map<String, dynamic> data = {
-        'email': _email,
-        'username': _username,
-        'password': _password,
-        'captcha': _captcha
+        'email': _emailController.text,
+        'username': _usernameController.text,
+        'password': _passwordController.text,
+        "password_confirmed": _confirmPasswordController.text,
+        'captcha': _verificationCodeController.text
       };
 
       String body = json.encode(data);
@@ -370,7 +488,7 @@ class _RegisterPageState extends State<RegisterPage> {
       if (response.statusCode == 200) {
         if (response.body == "Successfully register!") {
           Navigator.pushReplacementNamed(context, '/');
-        } else if (response.body == "Successfully register!") {
+        } else if (response.body == "Email has been registered!") {
           showAutoHideAlertDialog(
               context, ["Registration failed", "Email has been registered!"]);
         } else {
@@ -424,151 +542,91 @@ class _RegisterPageState extends State<RegisterPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextFormField(
-                  initialValue: 'userx@gmail.com',
+                  controller: _emailController,
                   decoration: InputDecoration(
-                    labelText: 'E-mail',
+                    labelText: 'EMAIL',
+                    errorText: _isEmailValid ? null : 'EMAIL NOT VALID',
                     labelStyle: const TextStyle(
-                      color: Colors.black,
                       fontSize: 18.0,
                       fontWeight: FontWeight.bold,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade300,
-                        width: 1.0,
-                      ),
-                    ),
-                  ),
-                  validator: (value) =>
-                      value!.isEmpty ? 'E-mail is required' : null,
-                  onChanged: (value) => _email = value.trim(),
-                ),
-                const SizedBox(height: 16.0),
-                TextFormField(
-                  initialValue: 'userx',
-                  decoration: InputDecoration(
-                    labelText: 'Username',
-                    labelStyle: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade300,
-                        width: 1.0,
-                      ),
                     ),
                   ),
                   validator: (value) =>
                       value!.isEmpty ? 'Username is required' : null,
-                  onChanged: (value) => _username = value.trim(),
+                  onChanged: _validateEmail,
                 ),
-                const SizedBox(height: 16.0),
                 TextFormField(
-                  initialValue: 'aa111111',
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    labelStyle: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade300,
-                        width: 1.0,
-                      ),
-                    ),
+                  controller: _usernameController,
+                  decoration: const InputDecoration(
+                    labelText: 'USERNAME',
                   ),
+                  validator: (value) =>
+                      value!.isEmpty ? 'Username is required' : null,
+                ),
+                TextFormField(
+                  controller: _passwordController,
                   obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'PASSWORD',
+                  ),
                   validator: (value) {
                     if (value!.isEmpty) {
                       return 'Please enter a password.';
                     } else if (value.length < 8) {
                       return 'Password is too weak. Passwords must be at least 8 characters long.';
-                    } else if (value == _username) {
+                    } else if (value == _usernameController.text) {
                       return 'Password cannot be the same as username.';
-                    } else if (value != _confirmPassword) {
+                    } else if (value != _confirmPasswordController.text) {
                       return 'Passwords do not match.';
                     }
                     return null;
                   },
-                  onChanged: (value) => _password = value.trim(),
                 ),
-                const SizedBox(height: 16.0),
                 TextFormField(
-                  initialValue: 'aa111111',
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    labelStyle: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade300,
-                        width: 1.0,
-                      ),
-                    ),
-                  ),
+                  controller: _confirmPasswordController,
                   obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'COMFIRM PASSWORD',
+                  ),
                   validator: (value) {
                     if (value!.isEmpty) {
                       return 'Please confirm your password.';
-                    } else if (value != _password) {
+                    } else if (value != _passwordController.text) {
                       return 'Passwords do not match.';
                     }
                     return null;
                   },
-                  onChanged: (value) => _confirmPassword = value.trim(),
                 ),
-                const SizedBox(height: 32.0),
-                TextFormField(
-                  initialValue: '0000',
-                  decoration: InputDecoration(
-                    labelText: 'Captcha',
-                    labelStyle: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade300,
-                        width: 1.0,
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _verificationCodeController,
+                        decoration: const InputDecoration(
+                          labelText: 'CAPTCHA',
+                        ),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Captcha is required' : null,
                       ),
                     ),
-                  ),
-                  validator: (value) =>
-                      value!.isEmpty ? 'Username is required' : null,
-                  onChanged: (value) => _username = value.trim(),
+                    ElevatedButton(
+                      onPressed: _isCoolingDown ? null : sendVerificationCode,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueGrey,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                      child: Text(_isCoolingDown
+                          ? 'COOLING($_coolDownTime)'
+                          : 'SEND CAPTCHA'),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 32.0),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: Colors.blueGrey,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
@@ -809,9 +867,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             const SizedBox(height: 8),
             TextButton(
               child: const Text('View all'),
-              onPressed: () {
-                // TODO: Navigate to detailed record page
-              },
+              onPressed: () {},
             ),
           ],
         ),
