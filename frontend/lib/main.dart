@@ -17,35 +17,26 @@ import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:group_project/plan.dart';
 import 'package:email_validator/email_validator.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+void main() => runApp(const MyApp());
 const serverUrl = '16.162.26.133:5000';
 const List<String> meals = <String>["Breakfast", "Lunch", "Dinner"];
 const List<String> exes = <String>["Jogging", "Crunches", "Push-ups"];
 var cookie = '';
 var isLoggedIn = false;
-void main() => runApp(const MyApp());
-/*Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences.setMockInitialValues({});
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-  runApp(const MyApp());
-}*/
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
   static const String _title = 'Our App';
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      //home: isLoggedIn == false ? const LoginPage() : const MyStatefulWidget(),
       title: _title,
       initialRoute: '/',
       routes: {
-        '/': (context) => const LoginPage(),
+        '/': (context) => const HomePage(),
+        '/login': (context) => const LoginPage(),
         '/home': (context) => const MyStatefulWidget(
               initialWidget: 'A',
             ),
@@ -95,6 +86,73 @@ showAutoHideAlertDialog(BuildContext context, List<String> texts) {
   );
 }
 
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+      ),
+      body: Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage("assets/images/1.png"),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage("assets/images/logo.png"),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  width: 250,
+                  height: 250,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Health Monitoring & Exercise Recording Application \n with Intelligent Assistant Based on BERT Model',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 55, 54, 54),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          )),
+      bottomNavigationBar: BottomAppBar(
+        child: SizedBox(
+          height: 100,
+          child: ElevatedButton(
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all<Color>(Colors.green),
+            ),
+            child: const Text(
+              'WELCOME',
+              style: TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            onPressed: () {
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class MyStatefulWidget extends StatefulWidget {
   const MyStatefulWidget({super.key, required this.initialWidget});
   final String initialWidget;
@@ -124,19 +182,16 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         _isLoading = true;
       });
-
       Map<String, dynamic> data = {
         'email': _emailController.text,
         'password': _passwordController.text
       };
       String body = json.encode(data);
-
       var response = await http.post(Uri.http(serverUrl, '/auth/login'),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
           },
           body: body);
-
       setState(() {
         _isLoading = false;
       });
@@ -323,19 +378,16 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _verificationCodeController =
       TextEditingController();
   bool _isEmailValid = true;
-
-  // 邮箱验证逻辑
+  bool _isCoolingDown = false;
+  int _coolDownTime = 60;
+  Timer? _timer;
   void _validateEmail(String email) {
     bool isValid = EmailValidator.validate(email);
-
     setState(() {
       _isEmailValid = isValid;
     });
   }
 
-  bool _isCoolingDown = false;
-  int _coolDownTime = 60;
-  Timer? _timer;
   void startCoolDown() {
     setState(() {
       _isCoolingDown = true;
@@ -368,21 +420,38 @@ class _RegisterPageState extends State<RegisterPage> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('COMFIRM'),
+              child: const Text('OK'),
             ),
           ],
         ),
       );
     } else {
       try {
-        await Future.delayed(const Duration(seconds: 2));
-        startCoolDown();
+        Map<String, String> data = {
+          'email': _emailController.text,
+        };
+        String body = json.encode(data);
+        var response = await http.post(
+          Uri.http(serverUrl, '/auth/captcha/get'),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: body,
+        );
+        if (response.statusCode == 200) {
+          startCoolDown();
+        } else {
+          showAutoHideAlertDialog(context, [
+            "CAPTCHA SENDING FAILED",
+            "Server unavailable now",
+          ]);
+        }
       } catch (e) {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
             title: const Text('FAILED'),
-            content: const Text('CAPTCHA SENDING FAILED，PLEASE TRY AGAIN'),
+            content: const Text('CAPTCHA SENDING FAILED", "PLEASE TRY AGAIN'),
             actions: [
               ElevatedButton(
                 onPressed: () {
@@ -671,24 +740,20 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     'Search history 2',
     'Search history 3'
   ];
-  final List<String> entries1 = <String>['Weight', 'Meal', 'Exercise'];
-  final List<String> entries2 = <String>[
-    'weight records',
-    'meal records',
-    'exercise records'
-  ];
   final List<String> entries3 = <String>['Plans', 'Profile', 'Logout'];
-  int healthScore = 75; // 用户的健康评分
-  List<double> weightRecords = [70, 72.5, 69.8]; // 体重记录
+  int healthScore = 75;
+  final List<String> scores = ['15', '15', '15', '15', '15'];
+  List<double> weightRecords = [70, 72.5, 69.8];
   double get latestWeight => weightRecords.isNotEmpty ? weightRecords.first : 0;
   List<String> dietRecords = [
     "Breakfast: Eggs and toast",
     "Lunch: Salad",
     "Dinner: Grilled chicken"
-  ]; // 饮食记录
-  List<String> exerciseRecords = ["Morning run", "Afternoon yoga"]; // 运动记录
-  List<int> waterRecords = [200, 300, 250]; // 饮水记录
+  ];
+  List<String> exerciseRecords = ["Morning run", "Afternoon yoga"];
+  List<int> waterRecords = [200, 300, 250];
   List<int> sleepRecords = [7, 6, 8];
+  int _power = 0;
   @override
   void initState() {
     super.initState();
@@ -706,6 +771,12 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   void updateText(String text) {
     setState(() {
       _operation = text;
+    });
+  }
+
+  void _incrementNumber() {
+    setState(() {
+      _power++;
     });
   }
 
@@ -727,18 +798,18 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
   Widget _record() {
     return GridView.count(
-      padding:
-          const EdgeInsets.fromLTRB(20, 40, 20, 40), // 设置上下各40，左右各20像素的空白边缘
-      crossAxisSpacing: 20.0, // 列之间的空隙
+      padding: const EdgeInsets.fromLTRB(20, 40, 20, 40),
+      crossAxisSpacing: 20.0,
       mainAxisSpacing: 20.0,
-      crossAxisCount: 2, // 两列
-      childAspectRatio: 1.0, // 宽高比为1:1
+      crossAxisCount: 2,
+      childAspectRatio: 1.0,
       children: <Widget>[
         _buildButton('MEAL', _images[0], 'meal'),
         _buildButton('WATER', _images[1], 'meal'),
         _buildButton('WEIGHT', _images[2], 'wei'),
         _buildButton('SLEEP', _images[3], 'wei'),
         _buildButton('EXERCISE', _images[4], 'exe'),
+        _buildButton(_power.toString(), 'assets/images/p.png', 'p'),
       ],
     );
   }
@@ -757,6 +828,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             case 'exe':
               exedialog(context, selectedexe, exes);
               break;
+            case 'p':
+              _incrementNumber;
           }
         },
         child: Column(
@@ -794,84 +867,111 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       children: [
         _buildHealthScoreModule(),
         _buildRecordModule(
-          label: 'Weight',
-          value: latestWeight.toString(),
-          records: weightRecords.map((weight) => weight.toString()).toList(),
-        ),
+            label: 'Weight',
+            value: latestWeight.toString(),
+            records: weightRecords.map((weight) => weight.toString()).toList(),
+            score: scores[0]),
         _buildRecordModule(
-          label: 'Diet',
-          value: dietRecords.first,
-          records: dietRecords,
-        ),
+            label: 'Diet',
+            value: dietRecords.first,
+            records: dietRecords,
+            score: scores[1]),
         _buildRecordModule(
-          label: 'Exercise',
-          value: exerciseRecords.first,
-          records: exerciseRecords,
-        ),
+            label: 'Exercise',
+            value: exerciseRecords.first,
+            records: exerciseRecords,
+            score: scores[2]),
         _buildRecordModule(
-          label: 'Water',
-          value: waterRecords.first.toString(),
-          records: waterRecords.map((amount) => amount.toString()).toList(),
-        ),
+            label: 'Water',
+            value: waterRecords.first.toString(),
+            records: waterRecords.map((amount) => amount.toString()).toList(),
+            score: scores[3]),
         _buildRecordModule(
-          label: 'Sleep',
-          value: sleepRecords.first.toString(),
-          records: sleepRecords.map((hours) => '$hours hours').toList(),
-        ),
+            label: 'Sleep',
+            value: sleepRecords.first.toString(),
+            records: sleepRecords.map((hours) => '$hours hours').toList(),
+            score: scores[4]),
       ],
     );
   }
 
   Widget _buildHealthScoreModule() {
     Color numberColor = healthScore >= 75 ? Colors.green : Colors.red;
-    return Card(
-      child: ListTile(
-        title: const Text(
-          'Health Score',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
+    return SizedBox(
+        width: 300,
+        height: 100,
+        child: Center(
+            child: Card(
+          shape: const StadiumBorder(
+            side: BorderSide(
+              color: Colors.grey,
+              width: 2.0,
+            ),
           ),
-        ),
-        trailing: Text(
-          healthScore.toString(),
-          style: TextStyle(
-            color: numberColor,
-            fontSize: 20,
+          elevation: 2,
+          child: ListTile(
+            title: const Text(
+              'Health Score',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 30,
+              ),
+            ),
+            trailing: Text(
+              healthScore.toString(),
+              style: TextStyle(
+                color: numberColor,
+                fontSize: 30,
+              ),
+            ),
           ),
-        ),
-      ),
-    );
+        )));
   }
 
   Widget _buildRecordModule(
       {required String label,
       required String value,
-      required List<String> records}) {
+      required List<String> records,
+      required String score}) {
     return Card(
-      child: ListTile(
-        title: Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Latest: $value',
-              style: const TextStyle(
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              child: const Text('View all'),
-              onPressed: () {},
-            ),
-          ],
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+        side: const BorderSide(
+          color: Colors.grey,
+          width: 1.0,
         ),
       ),
+      child: ListTile(
+          title: Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 25,
+            ),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Latest: $value',
+                style: const TextStyle(
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                child: const Text('View all'),
+                onPressed: () {},
+              ),
+            ],
+          ),
+          trailing: Text(
+            score,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 30,
+            ),
+          )),
     );
   }
 
@@ -902,18 +1002,20 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   Widget _assistant() {
     return Column(
       children: [
-        // Header
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: const EdgeInsets.symmetric(vertical: 40),
           child: const Text(
             'Your AI Assistant',
             style: TextStyle(
-              fontSize: 24,
+              fontFamily: 'Comic Neue',
+              fontSize: 40,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        // Search input
+        const SizedBox(
+          height: 16,
+        ),
         Container(
           decoration: BoxDecoration(
             border: Border.all(
@@ -932,10 +1034,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             ),
           ),
         ),
-        // Search history
         Expanded(
           child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 10),
+            margin: const EdgeInsets.symmetric(vertical: 15),
             child: ListView.builder(
               itemCount: _searchHistory.length,
               itemBuilder: (BuildContext context, int index) {
@@ -961,7 +1062,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   Widget _profile() {
-    return ListView.separated(
+    return Center(
+        child: ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: entries3.length,
       itemBuilder: (BuildContext context, int index) {
@@ -1008,7 +1110,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         );
       },
       separatorBuilder: (BuildContext context, int index) => const Divider(),
-    );
+    ));
   }
 
   @override
@@ -1016,7 +1118,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('RecFit System'),
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.green,
       ),
       body: Stack(
         children: [
@@ -1033,26 +1135,26 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         fixedColor: Colors.amber,
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.black,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.subject),
-            backgroundColor: Colors.blue,
+            backgroundColor: Colors.green,
             label: 'Now',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.view_list),
-            backgroundColor: Colors.blue,
+            backgroundColor: Colors.green,
             label: 'Past',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.view_list),
-            backgroundColor: Colors.blue,
+            icon: Icon(Icons.search),
+            backgroundColor: Colors.green,
             label: 'Assistent',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_circle),
-            backgroundColor: Colors.blue,
+            backgroundColor: Colors.green,
             label: 'Me',
           ),
         ],
