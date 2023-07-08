@@ -5,14 +5,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:group_project/exerecord.dart';
 import 'package:intl/intl.dart';
 import 'package:number_text_input_formatter/number_text_input_formatter.dart';
-import 'mealrecord.dart';
-import 'weightrecord.dart';
 import 'package:http/http.dart' as http;
-import 'package:group_project/dialogs.dart';
-import 'recview.dart';
+import 'records.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:group_project/plan.dart';
@@ -33,7 +29,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: _title,
-      initialRoute: '/',
+      initialRoute: '/login',
       routes: {
         '/': (context) => const HomePage(),
         '/login': (context) => const LoginPage(),
@@ -805,9 +801,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       childAspectRatio: 1.0,
       children: <Widget>[
         _buildButton('MEAL', _images[0], 'meal'),
-        _buildButton('WATER', _images[1], 'meal'),
+        _buildButton('WATER', _images[1], 'water'),
         _buildButton('WEIGHT', _images[2], 'wei'),
-        _buildButton('SLEEP', _images[3], 'wei'),
+        _buildButton('SLEEP', _images[3], 'sleep'),
         _buildButton('EXERCISE', _images[4], 'exe'),
         _buildButton(_power.toString(), 'assets/images/p.png', 'p'),
       ],
@@ -820,16 +816,41 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         onTap: () {
           switch (w) {
             case 'wei':
-              weidialog(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const WeightRecordPage()),
+              );
               break;
             case 'meal':
-              mealdialog(context, selectedMeal, meals);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MealRecordPage()),
+              );
               break;
             case 'exe':
-              exedialog(context, selectedexe, exes);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ExeRecordPage()),
+              );
               break;
             case 'p':
               _incrementNumber;
+              break;
+            case 'water':
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const WaterTrackerWidget()),
+              );
+              break;
+            case 'sleep':
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const SleepRecordPage()),
+              );
+              break;
           }
         },
         child: Column(
@@ -1118,7 +1139,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('RecFit System'),
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.greenAccent,
       ),
       body: Stack(
         children: [
@@ -1150,7 +1171,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           BottomNavigationBarItem(
             icon: Icon(Icons.search),
             backgroundColor: Colors.green,
-            label: 'Assistent',
+            label: 'Assistant',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_circle),
