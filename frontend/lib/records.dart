@@ -17,7 +17,7 @@ class WaterTrackerWidget extends StatefulWidget {
 
 class WaterTrackerWidgetState extends State<WaterTrackerWidget> {
   double dailyWaterIntake = 0;
-  double goalWaterIntake = 2000;
+  double goalWaterIntake = plan['water'];
 
   @override
   void initState() {
@@ -256,13 +256,12 @@ class SleepRecordPage extends StatefulWidget {
 
 class SleepRecordPageState extends State<SleepRecordPage> {
   String selectedTimeType = 'Sleep';
+  DateTime selectedDate = DateTime.now();
   DateTime selectedTime = DateTime.now();
+  List<String> b = plan['bed_time'].split(':');
+  List<String> w = plan['wake_up_time'].split(':');
   DateTime sleepTime = DateFormat("HH:mm:ss").parse("23:00:00");
-  int bedHour = 23;
-  int bedMinute = 0;
   DateTime wakeupTime = DateFormat("HH:mm:ss").parse("08:00:00");
-  int wakeHour = 8;
-  int wakeMinute = 0;
   String emotion = '😊';
   String evaluation = 'Well done!';
 
@@ -270,19 +269,19 @@ class SleepRecordPageState extends State<SleepRecordPage> {
   void initState() {
     super.initState();
     sleepTime = DateTime(selectedTime.year, selectedTime.month,
-        selectedTime.day, bedHour, bedMinute, 0, 0, 0);
+        selectedTime.day, int.parse(b[0]), int.parse(b[1]), 0, 0, 0);
     wakeupTime = DateTime(selectedTime.year, selectedTime.month,
-        selectedTime.day, wakeHour, wakeMinute, 0, 0, 0);
+        selectedTime.day, int.parse(w[0]), int.parse(w[1]), 0, 0, 0);
     int currentHour = int.parse(DateFormat('HH').format(selectedTime));
     if (currentHour >= 0 && currentHour <= 12) {
       selectedTimeType = "Wakeup";
     } else if (currentHour > 12 && currentHour <= 24) {
       selectedTimeType = "Sleep";
     }
-    updateSelectedTime(selectedTime);
+    _updateSelectedTime(selectedTime);
   }
 
-  void updateSelectedTime(DateTime newTime) {
+  void _updateSelectedTime(DateTime newTime) {
     setState(() {
       selectedTime = newTime;
       int hourDifference;
@@ -302,6 +301,64 @@ class SleepRecordPageState extends State<SleepRecordPage> {
         evaluation = 'You can do better!';
       }
     });
+  }
+
+  void _selectDate() async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null && pickedDate != selectedDate) {
+      setState(() {
+        selectedDate = pickedDate;
+      });
+    }
+  }
+
+  void postData() async {
+    final String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate);
+    final String formattedTime = DateFormat('HH:mm:ss').format(selectedTime);
+    final String time = '$formattedDate $formattedTime';
+    String datatype;
+    if (selectedTimeType == 'Sleep') {
+      datatype = 'bed_time';
+    } else {
+      datatype = 'wake_up_time';
+    }
+    var url = Uri.http(serverUrl, '/record/sleep');
+    Map<String, dynamic> data = {datatype: time, "sleep_date": formattedDate};
+    String body = json.encode(data);
+    try {
+      final response = await http.post(url,
+          headers: {
+            'cookie': cookie,
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: body);
+      if (response.statusCode == 200) {
+        return showDialog(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            content: const Text('You just have your SLEEP recorded!'),
+            actions: <TextButton>[
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Close'),
+              )
+            ],
+          ),
+        );
+      } else {
+        showAutoHideAlertDialog(context, ["Request Failed"]);
+      }
+    } catch (e) {
+      showAutoHideAlertDialog(context, ["Failed", "Server unavailable now"]);
+    }
   }
 
   @override
@@ -332,12 +389,23 @@ class SleepRecordPageState extends State<SleepRecordPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    const Center(
+                        child: Text(
+                      'Record Date:',
+                      style: TextStyle(fontSize: 18),
+                    )),
+                    const SizedBox(height: 8),
+                    Center(
+                        child: ElevatedButton(
+                      onPressed: _selectDate,
+                      child: Text(DateFormat.yMMMd().format(selectedDate)),
+                    )),
                     DropdownButton<String>(
                       value: selectedTimeType,
                       onChanged: (value) {
                         setState(() {
                           selectedTimeType = value!;
-                          updateSelectedTime(selectedTime);
+                          _updateSelectedTime(selectedTime);
                         });
                       },
                       items: const [
@@ -366,7 +434,7 @@ class SleepRecordPageState extends State<SleepRecordPage> {
                               value.hour,
                               value.minute,
                             );
-                            updateSelectedTime(newSelectedTime);
+                            _updateSelectedTime(newSelectedTime);
                           }
                         });
                       },
@@ -389,10 +457,7 @@ class SleepRecordPageState extends State<SleepRecordPage> {
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: () {
-                        // 提交按钮点击事件
-                        // 在这里添加处理提交的逻辑
-                      },
+                      onPressed: postData,
                       child: const Text('Submit'),
                     ),
                   ],
@@ -412,8 +477,8 @@ class WeightRecordPage extends StatefulWidget {
 class WeightRecordPageState extends State<WeightRecordPage> {
   DateTime selectedDate = DateTime.now();
   double currentWeight = 0.0;
-  double targetWeight = 80.0;
-  double initialWeight = 71.0;
+  double targetWeight = plan['weight'];
+  double initialWeight = plan['start_weight'];
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
@@ -433,15 +498,15 @@ class WeightRecordPageState extends State<WeightRecordPage> {
               ),
             ),
             child: Center(
-              child: SingleChildScrollView(
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.6,
-                  height: MediaQuery.of(context).size.height * 0.6,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.rectangle,
-                    borderRadius: BorderRadius.circular(10.0),
-                    color: Colors.grey.withOpacity(0.8),
-                  ),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.6,
+                height: MediaQuery.of(context).size.height * 0.6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.rectangle,
+                  borderRadius: BorderRadius.circular(10.0),
+                  color: Colors.grey.withOpacity(0.8),
+                ),
+                child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -580,14 +645,7 @@ class WeightRecordPageState extends State<WeightRecordPage> {
           actions: <TextButton>[
             TextButton(
               onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MyStatefulWidget(
-                      initialWidget: 'A',
-                    ),
-                  ),
-                );
+                Navigator.pop(context);
               },
               child: const Text('Close'),
             )
@@ -600,11 +658,11 @@ class WeightRecordPageState extends State<WeightRecordPage> {
   }
 
   Widget _buildEmoji() {
-    double difference = ((currentWeight - initialWeight)) /
+    double difference = ((currentWeight - initialWeight).abs()) /
         ((targetWeight - initialWeight).abs());
-    if (difference >= 0.7) {
+    if (difference >= 0.7 && difference <= 1) {
       return const Text('😊', style: TextStyle(fontSize: 48));
-    } else if (difference >= 0.3) {
+    } else if (difference >= 0.3 && difference <= 1) {
       return const Text('😐', style: TextStyle(fontSize: 48));
     } else {
       return const Text('😢', style: TextStyle(fontSize: 48));
@@ -663,6 +721,9 @@ class WeightProgress extends CustomPainter {
     if (progressRaw < 0) {
       progressText = '0%';
     }
+    if (progressRaw > 1) {
+      progressText = '100%';
+    }
 
     TextSpan progressSpan = TextSpan(
       text: progressText,
@@ -699,9 +760,11 @@ class MealRecordPageState extends State<MealRecordPage> {
   String selectedMealType = 'Breakfast';
   DateTime selectedDate = DateTime.now();
   DateTime selectedTime = DateTime.now();
+  DateFormat dateFormat = DateFormat('yyyy-MM-dd');
+  List<String> b = plan['breakfast_time'].split(':');
+  List<String> l = plan['lunch_time'].split(':');
+  List<String> d = plan['dinner_time'].split(':');
   DateTime bTime = DateFormat("HH:mm:ss").parse("08:00:00");
-  int bHour = 8;
-  int bMinute = 0;
   DateTime lTime = DateFormat("HH:mm:ss").parse("12:00:00");
   int lHour = 12;
   int lMinute = 0;
@@ -715,14 +778,14 @@ class MealRecordPageState extends State<MealRecordPage> {
   void initState() {
     super.initState();
     bTime = DateTime(selectedTime.year, selectedTime.month, selectedTime.day,
-        bHour, bMinute, 0, 0, 0);
+        int.parse(b[0]), int.parse(b[1]), 0, 0, 0);
     lTime = DateTime(selectedTime.year, selectedTime.month, selectedTime.day,
-        lHour, lMinute, 0, 0, 0);
+        int.parse(l[0]), int.parse(l[1]), 0, 0, 0);
     dTime = DateTime(selectedTime.year, selectedTime.month, selectedTime.day,
-        dHour, dMinute, 0, 0, 0);
+        int.parse(d[0]), int.parse(d[1]), 0, 0, 0);
     int currentHour = int.parse(DateFormat('HH').format(selectedTime));
     if (currentHour >= 0 && currentHour <= 10) {
-      selectedMealType = "Wakeup";
+      selectedMealType = "Breakfast";
     } else if (currentHour > 10 && currentHour <= 16) {
       selectedMealType = "Lunch";
     } else if (currentHour > 16 && currentHour <= 24) {
@@ -795,14 +858,7 @@ class MealRecordPageState extends State<MealRecordPage> {
             actions: <TextButton>[
               TextButton(
                 onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MyStatefulWidget(
-                        initialWidget: 'A',
-                      ),
-                    ),
-                  );
+                  Navigator.of(context).pop();
                 },
                 child: const Text('Close'),
               )
@@ -973,14 +1029,50 @@ class ExeRecordPageState extends State<ExeRecordPage> {
   String selectedExeType = 'Running';
   DateTime selectedDate = DateTime.now();
   DateTime selectedTime = DateTime.now();
+  int targetexe = 0;
   String emotion = '😊';
   String evaluation = 'Well done!';
   int exeduration = 0;
+  int exercised = 0;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
+    fetchWeeklyExe();
+    targetexe = plan["exercise_amount"];
+  }
+
+  String _formatDateComponent(int component) {
+    return component.toString().padLeft(2, '0');
+  }
+
+  void fetchWeeklyExe() async {
+    DateTime now = DateTime.now();
+    String formattedDate =
+        '${now.year}-${_formatDateComponent(now.month)}-${_formatDateComponent(now.day)}';
+    var url =
+        Uri.http(serverUrl, '/query/week_exercise', {'date': formattedDate});
+    try {
+      final response = await http.get(url, headers: {'cookie': cookie});
+      if (response.statusCode == 200) {
+        String jsonData = response.body;
+        Map<String, dynamic> data = jsonDecode(jsonData);
+        setState(() {
+          exercised = data['week_exercise_amount'];
+        });
+      } else {
+        showAutoHideAlertDialog(context, ["Request Failed"]);
+      }
+    } catch (e) {
+      showAutoHideAlertDialog(context, ["Failed", "Server unavailable now"]);
+    }
+  }
+
+  void updateWeeklyExe() {
+    setState(() {
+      fetchWeeklyExe();
+    });
   }
 
   void updateSelectedTime(DateTime newTime) {
@@ -1020,6 +1112,10 @@ class ExeRecordPageState extends State<ExeRecordPage> {
   }
 
   void postData() async {
+    updateWeeklyExe();
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
     final String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate);
     final String formattedTime = DateFormat('HH:mm:ss').format(selectedTime);
     final String exeTime = '$formattedDate $formattedTime';
@@ -1045,14 +1141,7 @@ class ExeRecordPageState extends State<ExeRecordPage> {
             actions: <TextButton>[
               TextButton(
                 onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MyStatefulWidget(
-                        initialWidget: 'A',
-                      ),
-                    ),
-                  );
+                  Navigator.of(context).pop();
                 },
                 child: const Text('Close'),
               )
@@ -1082,17 +1171,19 @@ class ExeRecordPageState extends State<ExeRecordPage> {
               ),
             ),
             child: Center(
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.6,
-                height: MediaQuery.of(context).size.height * 0.6,
-                decoration: BoxDecoration(
-                  shape: BoxShape.rectangle,
-                  borderRadius: BorderRadius.circular(10.0),
-                  color: Colors.grey.withOpacity(0.5),
-                ),
+                child: Container(
+              width: MediaQuery.of(context).size.width * 0.6,
+              height: MediaQuery.of(context).size.height * 0.6,
+              decoration: BoxDecoration(
+                shape: BoxShape.rectangle,
+                borderRadius: BorderRadius.circular(10.0),
+                color: Colors.grey.withOpacity(0.5),
+              ),
+              child: SingleChildScrollView(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    const SizedBox(height: 20),
                     Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.rectangle,
@@ -1144,71 +1235,90 @@ class ExeRecordPageState extends State<ExeRecordPage> {
                                 ),
                               ],
                             ))),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      style: ButtonStyle(
-                        backgroundColor:
-                            MaterialStateProperty.all<Color>(Colors.green),
-                      ),
-                      onPressed: _selectDate,
-                      child: Text(DateFormat.yMMMd().format(selectedDate)),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      style: ButtonStyle(
-                        backgroundColor:
-                            MaterialStateProperty.all<Color>(Colors.green),
-                      ),
-                      onPressed: () {
-                        showTimePicker(
-                          context: context,
-                          initialTime: TimeOfDay.fromDateTime(selectedTime),
-                        ).then((value) {
-                          if (value != null) {
-                            DateTime newSelectedTime = DateTime(
-                              selectedTime.year,
-                              selectedTime.month,
-                              selectedTime.day,
-                              value.hour,
-                              value.minute,
-                            );
-                            updateSelectedTime(newSelectedTime);
-                          }
-                        });
-                      },
-                      child: const Text('Exercise Time'),
-                    ),
-                    const SizedBox(height: 20),
-                    Form(
-                      key: _formKey,
-                      child: Column(
+                    const SizedBox(height: 10),
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          TextFormField(
-                            decoration: const InputDecoration(
-                              labelText: 'Exercise Duration (min)',
+                          const SizedBox(width: 5),
+                          ElevatedButton(
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                  Colors.green),
                             ),
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value!.isEmpty) {
-                                return 'Please enter your exercise duration';
-                              }
-                              return null;
-                            },
-                            onChanged: (value) {
-                              setState(() {
-                                if (value.isEmpty) {
-                                  exeduration = 0;
-                                } else {
-                                  exeduration = int.parse(value);
+                            onPressed: _selectDate,
+                            child:
+                                Text(DateFormat.yMMMd().format(selectedDate)),
+                          ),
+                          const SizedBox(width: 5),
+                          ElevatedButton(
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all<Color>(
+                                  Colors.green),
+                            ),
+                            child: Text(DateFormat.Hm().format(selectedTime)),
+                            onPressed: () {
+                              showTimePicker(
+                                context: context,
+                                initialTime:
+                                    TimeOfDay.fromDateTime(selectedTime),
+                              ).then((value) {
+                                if (value != null) {
+                                  DateTime newSelectedTime = DateTime(
+                                    selectedTime.year,
+                                    selectedTime.month,
+                                    selectedTime.day,
+                                    value.hour,
+                                    value.minute,
+                                  );
+                                  updateSelectedTime(newSelectedTime);
                                 }
-                                updateDuration(exeduration);
                               });
                             },
                           ),
-                        ],
-                      ),
-                    ),
+                          const SizedBox(width: 5),
+                        ]),
+                    const SizedBox(height: 10),
+                    Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                decoration: const InputDecoration(
+                                  labelText: 'Exercise Duration (min)',
+                                ),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value!.isEmpty) {
+                                    return 'Please enter your exercise duration';
+                                  }
+                                  return null;
+                                },
+                                onChanged: (value) {
+                                  setState(() {
+                                    if (value.isEmpty) {
+                                      exeduration = 0;
+                                    } else {
+                                      exeduration = int.parse(value);
+                                    }
+                                    updateDuration(exeduration);
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        )),
                     const SizedBox(height: 20),
+                    ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor:
+                            MaterialStateProperty.all<Color>(Colors.green),
+                      ),
+                      onPressed: postData,
+                      child: const Text('Submit'),
+                    ),
+                    const SizedBox(height: 10),
                     Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.rectangle,
@@ -1217,10 +1327,30 @@ class ExeRecordPageState extends State<ExeRecordPage> {
                         ),
                         child: Padding(
                             padding: const EdgeInsets.all(16),
-                            child: Text(
-                              '$selectedExeType Time: $exeduration',
-                              style: const TextStyle(fontSize: 20),
-                            ))),
+                            child: Column(children: [
+                              Text('$selectedExeType Time: $exeduration min',
+                                  style: const TextStyle(fontSize: 20)),
+                              const SizedBox(height: 8),
+                              Text('Exercised: $exercised min',
+                                  style: const TextStyle(fontSize: 18)),
+                              const SizedBox(height: 8),
+                              Text('Target: $targetexe min',
+                                  style: const TextStyle(fontSize: 18)),
+                              const SizedBox(height: 8),
+                            ]))),
+                    const SizedBox(height: 20),
+                    Center(
+                        child: SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: CustomPaint(
+                        painter: WeightProgress(
+                          targetWeight: targetexe.toDouble(),
+                          currentWeight: exercised.toDouble(),
+                          initialWeight: 0.0,
+                        ),
+                      ),
+                    )),
                     const SizedBox(height: 20),
                     Text(
                       emotion,
@@ -1243,17 +1373,9 @@ class ExeRecordPageState extends State<ExeRecordPage> {
                               ),
                             ))),
                     const SizedBox(height: 20),
-                    ElevatedButton(
-                      style: ButtonStyle(
-                        backgroundColor:
-                            MaterialStateProperty.all<Color>(Colors.green),
-                      ),
-                      onPressed: postData,
-                      child: const Text('Submit'),
-                    ),
                   ],
                 ),
               ),
-            )));
+            ))));
   }
 }

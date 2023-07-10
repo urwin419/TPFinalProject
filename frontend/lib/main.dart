@@ -1,26 +1,87 @@
-// ignore_for_file: unused_import, library_private_types_in_public_api, use_build_context_synchronously, invalid_use_of_visible_for_testing_member, unused_field
+// ignore_for_file: unused_import, library_private_types_in_public_api, use_build_context_synchronously, invalid_use_of_visible_for_testing_member, unused_field, unnecessary_import
 
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:number_text_input_formatter/number_text_input_formatter.dart';
 import 'package:http/http.dart' as http;
 import 'records.dart';
+import 'profile.dart';
+import 'request.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:group_project/plan.dart';
+import 'plan.dart';
+import 'view.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 void main() => runApp(const MyApp());
 const serverUrl = '16.162.26.133:5000';
-const List<String> meals = <String>["Breakfast", "Lunch", "Dinner"];
-const List<String> exes = <String>["Jogging", "Crunches", "Push-ups"];
+Map<String, dynamic> latestRecord = {
+  'body': {
+    'BMI': 19.6,
+    'date': '2023-07-07',
+    'height': 175.0,
+    'weight': 60.0,
+  },
+  'exercise': {
+    'exercise_amount': 70,
+    'exercise_time': 'Fri, 07 Jul 2023 18:10:22 GMT',
+    'exercise_type': 'Running',
+  },
+  'meal': {
+    'meal_content': 'lunch',
+    'meal_date': '2023-07-05',
+    'meal_time': '11:45:00',
+  },
+  'plan': {
+    'bed_time': '23:00:00',
+    'breakfast_time': '09:00:00',
+    'dinner_time': '17:00:00',
+    'exercise_amount': 150,
+    'lunch_time': '11:00:00',
+    'plan_date': '2023-07-05',
+    'wake_up_time': '08:00:00',
+    'water': 2.0,
+    'weight': 60.0,
+  },
+  'sleep': {
+    'bed_time': 'Sat, 08 Jul 2023 22:40:00 GMT',
+    'sleep_date': '2023-07-09',
+    'wake_up_time': 'Sun, 09 Jul 2023 08:00:00 GMT',
+  },
+  'water': {
+    'drinking_time': 'Fri, 07 Jul 2023 18:17:29 GMT',
+    'drinking_volume': 200,
+  },
+};
+Map<String, dynamic> plan = {
+  "bed_time": "23:00:00",
+  "breakfast_time": "08:00:00",
+  "dinner_time": "18:00:00",
+  "exercise_amount": 150,
+  "lunch_time": "12:00:00",
+  "plan_date": "2023-07-09",
+  "start_weight": 80.0,
+  "wake_up_time": "08:00:00",
+  "water": 2000.0,
+  "weight": 60.0
+};
+Map<String, dynamic> scores = {
+  "bmi": 100,
+  "exercise": 46.666666666666664,
+  "meal": 0.0,
+  "sleep": 12.54724111866969,
+  "total_score": 37.55706727135299,
+  "water": 28.571428571428573,
+  "week_start": "2023-07-03"
+};
+var scoreweek = "2023-07-03";
 var cookie = '';
-var isLoggedIn = false;
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -33,53 +94,13 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const HomePage(),
         '/login': (context) => const LoginPage(),
-        '/home': (context) => const MyStatefulWidget(
+        '/register': (context) => const RegisterPage(),
+        '/home': (context) => const MainPage(
               initialWidget: 'A',
             ),
-        '/register': (context) => const RegisterPage(),
-        '/plan': (context) => const PlanPage(),
       },
     );
   }
-}
-
-showAutoHideAlertDialog(BuildContext context, List<String> texts) {
-  AlertDialog alert = AlertDialog(
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-    ),
-    content: SizedBox(
-      height: 120,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 60),
-          const SizedBox(height: 10),
-          Text(texts[0],
-              style:
-                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 5),
-          Text(texts[1],
-              style: const TextStyle(fontSize: 16, color: Colors.grey)),
-        ],
-      ),
-    ),
-    backgroundColor: Colors.white,
-    elevation: 8,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-  );
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      Future.delayed(const Duration(seconds: 2), () {
-        Navigator.of(context).pop(true);
-      });
-      return WillPopScope(
-        onWillPop: () async => false,
-        child: alert,
-      );
-    },
-  );
 }
 
 class HomePage extends StatelessWidget {
@@ -149,13 +170,6 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class MyStatefulWidget extends StatefulWidget {
-  const MyStatefulWidget({super.key, required this.initialWidget});
-  final String initialWidget;
-  @override
-  State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
-}
-
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -183,32 +197,37 @@ class _LoginPageState extends State<LoginPage> {
         'password': _passwordController.text
       };
       String body = json.encode(data);
-      var response = await http.post(Uri.http(serverUrl, '/auth/login'),
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-          },
-          body: body);
-      setState(() {
-        _isLoading = false;
-      });
-      if (kDebugMode) {
-        print(response.statusCode);
-      }
-      if (response.statusCode == 200) {
-        if (response.body == "Successfully login!") {
-          var header = response.headers['set-cookie'];
-          var cookies = header?.split(';')[0];
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('isLoggedIn', true);
-          cookie = cookies!;
-          Navigator.pushReplacementNamed(context, '/home');
-        } else {
-          showAutoHideAlertDialog(context,
-              ["Authentication failed", "Incorrect username or password"]);
+      try {
+        var response = await http.post(Uri.http(serverUrl, '/auth/login'),
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+              'Connection': 'keep-alive'
+            },
+            body: body);
+        setState(() {
+          _isLoading = false;
+        });
+        if (kDebugMode) {
+          print(response.statusCode);
         }
-      } else {
-        showAutoHideAlertDialog(
-            context, ["Authentication failed", "Server unavailable now"]);
+        if (response.statusCode == 200) {
+          if (response.body == "Successfully login!") {
+            var header = response.headers['set-cookie'];
+            var cookies = header?.split(';')[0];
+            cookie = cookies!;
+            await fetchLatestRecord(context);
+            await fetchPlan(context);
+            Navigator.pushReplacementNamed(context, '/home');
+          } else {
+            showAutoHideAlertDialog(context,
+                ["Authentication failed", "Incorrect username or password"]);
+          }
+        } else {
+          showAutoHideAlertDialog(
+              context, ["Authentication failed", "Server unavailable now"]);
+        }
+      } catch (e) {
+        showAutoHideAlertDialog(context, ["Failed", "Server unavailable now"]);
       }
     }
   }
@@ -255,7 +274,7 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(
                   width: double.infinity,
                   height: 80,
-                  child: Expanded(
+                  child: Form(
                     child: TextFormField(
                       controller: _emailController,
                       decoration: InputDecoration(
@@ -284,7 +303,7 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(
                   width: double.infinity,
                   height: 80,
-                  child: Expanded(
+                  child: Form(
                     child: TextFormField(
                       controller: _passwordController,
                       decoration: InputDecoration(
@@ -717,13 +736,19 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 }
 
-class _MyStatefulWidgetState extends State<MyStatefulWidget> {
-  String selectedMeal = meals.first;
-  String selectedexe = exes.first;
+class MainPage extends StatefulWidget {
+  const MainPage({super.key, required this.initialWidget});
+  final String initialWidget;
+  @override
+  State<MainPage> createState() => _MainPageState();
+}
+
+class _MainPageState extends State<MainPage> {
+  String _answer = '';
+  bool _isSubmitting = false;
+  final TextEditingController _questionController = TextEditingController();
   int _selectedIndex = 0;
   late Widget selectedWidget;
-  String _operation = 'record weight';
-  String _searchText = '';
   final List<String> _images = [
     'assets/images/meal.jpg',
     'assets/images/water.jpg',
@@ -731,28 +756,30 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     'assets/images/sleep.jpg',
     'assets/images/exe.jpg',
   ];
-  final List<String> _searchHistory = [
-    'Search history 1',
-    'Search history 2',
-    'Search history 3'
+  List<dynamic> _searchHistory = [
+    {
+      "answer": "Ask your first question!",
+      "qa_time": "2023-07-09T00:00:00",
+      "question": "COME!"
+    },
+    {
+      "answer": "Ask your first question!",
+      "qa_time": "2023-07-09T00:00:00",
+      "question": "COME!"
+    },
+    {
+      "answer": "Ask your first question!",
+      "qa_time": "2023-07-09T00:00:00",
+      "question": "COME!"
+    }
   ];
   final List<String> entries3 = <String>['Plans', 'Profile', 'Logout'];
-  int healthScore = 75;
-  final List<String> scores = ['15', '15', '15', '15', '15'];
-  List<double> weightRecords = [70, 72.5, 69.8];
-  double get latestWeight => weightRecords.isNotEmpty ? weightRecords.first : 0;
-  List<String> dietRecords = [
-    "Breakfast: Eggs and toast",
-    "Lunch: Salad",
-    "Dinner: Grilled chicken"
-  ];
-  List<String> exerciseRecords = ["Morning run", "Afternoon yoga"];
-  List<int> waterRecords = [200, 300, 250];
-  List<int> sleepRecords = [7, 6, 8];
+  List records = [];
   int _power = 0;
   @override
   void initState() {
     super.initState();
+    getHistory();
     if (widget.initialWidget == 'A') {
       selectedWidget = _record();
     } else if (widget.initialWidget == 'B') {
@@ -764,10 +791,82 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     }
   }
 
-  void updateText(String text) {
-    setState(() {
-      _operation = text;
-    });
+  void fetchAnswer(question) async {
+    String formattedTime =
+        DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+    var url = Uri.http(serverUrl, '/query/NLP_QA');
+    Map<String, dynamic> data = {
+      "qa_time": formattedTime,
+      "question": question
+    };
+    String body = json.encode(data);
+    try {
+      final response = await http.post(url,
+          headers: {
+            'cookie': cookie,
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: body);
+      if (response.statusCode == 200) {
+        String answer = json.decode(response.body)['answer'];
+        setState(() {
+          _answer = answer;
+        });
+        _showAnswerDialog();
+      } else {
+        throw Exception('Unexpected error occured!');
+      }
+    } catch (e) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('FAILED'),
+            content: const Text('Request Failed'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Close'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
+  }
+
+  void _showAnswerDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Here is your answer!'),
+          content: TypewriterText(text: _answer),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close'),
+              onPressed: () {
+                _questionController.clear();
+                Navigator.of(context).pop();
+                setState(() {
+                  getHistory();
+                });
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void getHistory() async {
+    _searchHistory = await fetchQAHistory();
   }
 
   void _incrementNumber() {
@@ -783,6 +882,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       if (index == 0) {
         selectedWidget = _record();
       } else if (index == 1) {
+        fetchScores(context);
         selectedWidget = _past();
       } else if (index == 2) {
         selectedWidget = _assistant();
@@ -882,6 +982,18 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     );
   }
 
+  String _convertTime(inputDateStr) {
+    DateFormat inputFormat = DateFormat('EEE, dd MMM yyyy HH:mm:ss zzz');
+
+    DateTime inputDate = inputFormat.parse(inputDateStr);
+
+    DateFormat outputFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+
+    String outputDateStr = outputFormat.format(inputDate);
+
+    return outputDateStr;
+  }
+
   Widget _past() {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -889,35 +1001,44 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         _buildHealthScoreModule(),
         _buildRecordModule(
             label: 'Weight',
-            value: latestWeight.toString(),
-            records: weightRecords.map((weight) => weight.toString()).toList(),
-            score: scores[0]),
+            type: 'body',
+            prefix: latestRecord['body']['date'].toString(),
+            value: '${latestRecord['body']['weight']} kg',
+            score: scores["bmi"].toInt().toString()),
         _buildRecordModule(
-            label: 'Diet',
-            value: dietRecords.first,
-            records: dietRecords,
-            score: scores[1]),
+            label: 'MealTiming',
+            type: 'meal',
+            prefix:
+                '${latestRecord['meal']['meal_date']} ${latestRecord['meal']['meal_time']}',
+            value: '\nYou had ${latestRecord['meal']['meal_content']}',
+            score: scores["meal"].toInt().toString()),
         _buildRecordModule(
             label: 'Exercise',
-            value: exerciseRecords.first,
-            records: exerciseRecords,
-            score: scores[2]),
+            type: 'exercise',
+            prefix: _convertTime(latestRecord['exercise']['exercise_time']),
+            value:
+                '\n${latestRecord['exercise']['exercise_type']} for ${latestRecord['exercise']['exercise_amount']} mins',
+            score: scores["exercise"].toInt().toString()),
         _buildRecordModule(
             label: 'Water',
-            value: waterRecords.first.toString(),
-            records: waterRecords.map((amount) => amount.toString()).toList(),
-            score: scores[3]),
+            type: 'water',
+            prefix: _convertTime(latestRecord['water']['drinking_time']),
+            value: '${latestRecord['water']['drinking_volume']} ml',
+            score: scores["water"].toInt().toString()),
         _buildRecordModule(
             label: 'Sleep',
-            value: sleepRecords.first.toString(),
-            records: sleepRecords.map((hours) => '$hours hours').toList(),
-            score: scores[4]),
+            type: 'sleep',
+            prefix: 'Sleep',
+            value:
+                'from ${_convertTime(latestRecord['sleep']['bed_time'])} \nto ${_convertTime(latestRecord['sleep']['wake_up_time'])}',
+            score: scores["sleep"].toInt().toString()),
       ],
     );
   }
 
   Widget _buildHealthScoreModule() {
-    Color numberColor = healthScore >= 75 ? Colors.green : Colors.red;
+    Color numberColor = getGradientColor(
+        scores["total_score"].toInt(), 0, 100, Colors.red, Colors.green);
     return SizedBox(
         width: 300,
         height: 100,
@@ -939,7 +1060,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
               ),
             ),
             trailing: Text(
-              healthScore.toString(),
+              scores["total_score"].toInt().toString(),
               style: TextStyle(
                 color: numberColor,
                 fontSize: 30,
@@ -951,8 +1072,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
   Widget _buildRecordModule(
       {required String label,
+      required String prefix,
       required String value,
-      required List<String> records,
+      required String type,
       required String score}) {
     return Card(
       shape: RoundedRectangleBorder(
@@ -974,7 +1096,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Latest: $value',
+                '$prefix: $value',
                 style: const TextStyle(
                   fontSize: 16,
                 ),
@@ -982,7 +1104,17 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
               const SizedBox(height: 8),
               TextButton(
                 child: const Text('View all'),
-                onPressed: () {},
+                onPressed: () async {
+                  records = await fetchRecord(type);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ViewAll(
+                              records: records,
+                              type: type,
+                            )),
+                  );
+                },
               ),
             ],
           ),
@@ -996,18 +1128,94 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     );
   }
 
-  void _searchTextChanged(String newValue) {
-    setState(() {
-      _searchText = newValue;
-    });
+  Color getGradientColor(
+      int value, int minValue, int maxValue, Color startColor, Color endColor) {
+    value = value.clamp(minValue, maxValue);
+    double ratio = (value - minValue) / (maxValue - minValue);
+    int r = (startColor.red + (endColor.red - startColor.red) * ratio).toInt();
+    int g = (startColor.green + (endColor.green - startColor.green) * ratio)
+        .toInt();
+    int b =
+        (startColor.blue + (endColor.blue - startColor.blue) * ratio).toInt();
+    Color gradientColor = Color.fromARGB(255, r, g, b);
+    return gradientColor;
   }
 
-  void _showSearchResult(String item) {
+  void _showQuestionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Please enter your question.'),
+          content: TextField(
+            controller: _questionController,
+            decoration: const InputDecoration(hintText: 'Question'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                _questionController.clear();
+                Navigator.of(context).pop();
+                setState(() {
+                  getHistory();
+                });
+              },
+            ),
+            Visibility(
+              visible: !_isSubmitting,
+              child: TextButton(
+                child: const Text('Submit'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _submitQuestion();
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _submitQuestion() {
+    String question = _questionController.text.trim();
+
+    if (question.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Warning'),
+            content: const Text('Question cannot be empty!'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Close'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    fetchAnswer(question);
+  }
+
+  void _showSearchResult(int index) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Search Result'),
-        content: Text('You tapped on: $item'),
+        title: Text(_searchHistory[index]['question']),
+        content: Text(_searchHistory[index]['answer']),
         actions: [
           TextButton(
             child: const Text('Close'),
@@ -1021,65 +1229,90 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   Widget _assistant() {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 40),
-          child: const Text(
-            'Your AI Assistant',
-            style: TextStyle(
-              fontFamily: 'Comic Neue',
-              fontSize: 40,
-              fontWeight: FontWeight.bold,
-            ),
+    return Stack(children: [
+      Column(
+        children: [
+          const SizedBox(
+            height: 16,
           ),
-        ),
-        const SizedBox(
-          height: 16,
-        ),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: Colors.grey,
-            ),
-            borderRadius: BorderRadius.circular(5),
+          const SizedBox(
+              width: 400,
+              height: 100,
+              child: Center(
+                  child: Card(
+                      shape: StadiumBorder(
+                        side: BorderSide(
+                          color: Colors.grey,
+                          width: 2.0,
+                        ),
+                      ),
+                      elevation: 2,
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text(
+                          'Your AI Assistant',
+                          style: TextStyle(
+                            fontFamily: 'Comic Neue',
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      )))),
+          const SizedBox(
+            height: 16,
           ),
-          margin: const EdgeInsets.symmetric(horizontal: 20),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: TextField(
-            onChanged: _searchTextChanged,
-            decoration: const InputDecoration(
-              icon: Icon(Icons.search),
-              hintText: 'Search',
-              border: InputBorder.none,
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 15),
+              child: ListView.builder(
+                itemCount: _searchHistory.length,
+                itemBuilder: (BuildContext context, int index) {
+                  final item = _searchHistory[index]['question'];
+                  return Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                        side: const BorderSide(
+                          color: Colors.grey,
+                          width: 2.0,
+                        ),
+                      ),
+                      child: InkWell(
+                        onTap: () {
+                          _showSearchResult(index);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: const BoxDecoration(
+                            border:
+                                Border(bottom: BorderSide(color: Colors.grey)),
+                          ),
+                          child: Text(
+                            item,
+                            style: const TextStyle(
+                              fontSize: 24,
+                            ),
+                          ),
+                        ),
+                      ));
+                },
+              ),
             ),
-          ),
+          )
+        ],
+      ),
+      Positioned(
+        right: 16,
+        bottom: 16,
+        child: FloatingActionButton(
+          onPressed: () {
+            _showQuestionDialog();
+          },
+          backgroundColor: Colors.green,
+          child: const Icon(Icons.search),
         ),
-        Expanded(
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 15),
-            child: ListView.builder(
-              itemCount: _searchHistory.length,
-              itemBuilder: (BuildContext context, int index) {
-                final item = _searchHistory[index];
-                return InkWell(
-                  onTap: () {
-                    _showSearchResult(item);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: Colors.grey)),
-                    ),
-                    child: Text(item),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ],
-    );
+      ),
+    ]);
   }
 
   Widget _profile() {
@@ -1109,12 +1342,21 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           ),
           child: GestureDetector(
             onTap: () {
+              if (index == 0) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PlanPage()),
+                );
+              }
+              if (index == 1) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
+                );
+              }
               if (index == 2) {
                 Navigator.pushReplacementNamed(context, '/');
                 cookie = "";
-              }
-              if (index == 0) {
-                Navigator.pushReplacementNamed(context, '/plan');
               }
             },
             child: Center(
@@ -1139,20 +1381,16 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('RecFit System'),
-        backgroundColor: Colors.greenAccent,
+        backgroundColor: Colors.green,
       ),
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage("assets/images/login.png"),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: selectedWidget,
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("assets/images/main.png"),
+            fit: BoxFit.cover,
           ),
-        ],
+        ),
+        child: selectedWidget,
       ),
       bottomNavigationBar: BottomNavigationBar(
         fixedColor: Colors.amber,
@@ -1180,9 +1418,84 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           ),
         ],
         currentIndex: _selectedIndex,
-        //selectedItemColor: Colors.amber[800],
         onTap: _onNavItemTapped,
       ),
     );
   }
+}
+
+class TypewriterText extends StatefulWidget {
+  final String text;
+  final Duration duration;
+
+  const TypewriterText(
+      {super.key,
+      required this.text,
+      this.duration = const Duration(milliseconds: 100)});
+
+  @override
+  _TypewriterTextState createState() => _TypewriterTextState();
+}
+
+class _TypewriterTextState extends State<TypewriterText> {
+  int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    Timer.periodic(widget.duration, (Timer timer) {
+      setState(() {
+        _index++;
+      });
+      if (_index >= widget.text.length) {
+        timer.cancel();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String displayText = widget.text.substring(0, _index);
+
+    return Text(displayText);
+  }
+}
+
+showAutoHideAlertDialog(BuildContext context, List<String> texts) {
+  AlertDialog alert = AlertDialog(
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    content: SizedBox(
+      height: 120,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 60),
+          const SizedBox(height: 10),
+          Text(texts[0],
+              style:
+                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 5),
+          Text(texts[1],
+              style: const TextStyle(fontSize: 16, color: Colors.grey)),
+        ],
+      ),
+    ),
+    backgroundColor: Colors.white,
+    elevation: 8,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+  );
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      Future.delayed(const Duration(seconds: 2), () {
+        Navigator.of(context).pop(true);
+      });
+      return WillPopScope(
+        onWillPop: () async => false,
+        child: alert,
+      );
+    },
+  );
 }
