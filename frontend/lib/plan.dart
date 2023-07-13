@@ -97,7 +97,7 @@ class PlanPagestate extends State<PlanPage> {
     };
     String body = json.encode(data);
     var response = await http.post(
-      Uri.http(serverUrl, '/record/plan'),
+      Uri.parse('$serverUrl/record/plan'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'cookie': cookie

@@ -3,15 +3,17 @@ import 'package:http/http.dart' as http;
 import 'main.dart';
 
 Future<void> fetchLatestRecord(context) async {
-  var url = Uri.http(serverUrl, '/query/latest_record');
   try {
-    final response = await http.get(url, headers: {
+    final response =
+        await http.get(Uri.parse('$serverUrl/query/latest_record'), headers: {
       'cookie': cookie,
       'Content-Type': 'application/json; charset=UTF-8',
+      'Connection': 'keep-alive'
     });
     if (response.statusCode == 200) {
       final jsonData = jsonDecode(response.body);
       latestRecord = jsonData;
+      print(response.body);
     } else {
       showAutoHideAlertDialog(context, ["Query Failed"]);
     }
@@ -21,16 +23,17 @@ Future<void> fetchLatestRecord(context) async {
 }
 
 Future<void> fetchPlan(context) async {
-  var url = Uri.http(
-      serverUrl, '/query/record', {'record_type': 'plan', 'latest': 'True'});
   try {
-    final response = await http.get(url, headers: {
-      'cookie': cookie,
-      'Content-Type': 'application/json; charset=UTF-8',
-    });
+    final response = await http.get(
+        Uri.parse('$serverUrl/query/record?record_type=plan&latest=True'),
+        headers: {
+          'cookie': cookie,
+          'Content-Type': 'application/json; charset=UTF-8',
+        });
     if (response.statusCode == 200) {
       final jsonData = jsonDecode(response.body);
       plan = jsonData['record'];
+      print(response.body);
     } else {
       showAutoHideAlertDialog(context, ["Query Failed"]);
     }
@@ -40,12 +43,9 @@ Future<void> fetchPlan(context) async {
 }
 
 Future<void> fetchScores(context) async {
-  var url = Uri.http(
-    serverUrl,
-    '/query/health_scores',
-  );
   try {
-    final response = await http.get(url, headers: {
+    final response =
+        await http.get(Uri.parse('$serverUrl/query/health_scores'), headers: {
       'cookie': cookie,
       'Content-Type': 'application/json; charset=UTF-8',
     });
@@ -68,11 +68,12 @@ Future<void> fetchScores(context) async {
 }
 
 Future<List<dynamic>> fetchRecord(kind) async {
-  var url = Uri.http(serverUrl, '/query/record', {'record_type': kind});
-  final response = await http.get(url, headers: {
-    'cookie': cookie,
-    'Content-Type': 'application/json; charset=UTF-8',
-  });
+  final response = await http.get(
+      Uri.parse('$serverUrl/query/health_scores?record_type=$kind'),
+      headers: {
+        'cookie': cookie,
+        'Content-Type': 'application/json; charset=UTF-8',
+      });
   if (response.statusCode == 200) {
     List jsonResponse = json.decode(response.body)["records"];
     return jsonResponse;
@@ -82,9 +83,9 @@ Future<List<dynamic>> fetchRecord(kind) async {
 }
 
 Future<List<dynamic>> fetchQAHistory() async {
-  var url = Uri.http(serverUrl, '/query/qa_history', {'num': '10'});
   try {
-    final response = await http.get(url, headers: {
+    final response = await http
+        .get(Uri.parse('$serverUrl/query/qa_history?num=10'), headers: {
       'cookie': cookie,
       'Content-Type': 'application/json; charset=UTF-8',
     });

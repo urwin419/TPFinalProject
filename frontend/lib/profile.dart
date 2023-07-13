@@ -23,14 +23,12 @@ class ProfilePageState extends State<ProfilePage> {
       return;
     }
     String formattedDate = DateFormat('yyyy-M-d').format(DateTime.now());
-
-    var url = Uri.http(serverUrl, '/record/body');
     Map<String, dynamic> data = {
       "date": formattedDate,
       "height": currentHeight
     };
     String body = json.encode(data);
-    final response = await http.post(url,
+    final response = await http.post(Uri.parse('$serverUrl/record/body'),
         headers: {
           'cookie': cookie,
           'Content-Type': 'application/json; charset=UTF-8',
@@ -58,10 +56,9 @@ class ProfilePageState extends State<ProfilePage> {
   }
 
   void _submitPreference() async {
-    var url = Uri.http(serverUrl, '/auth/scoring/update_preference');
     Map<String, dynamic> data = {"prefer_personal": healthRating};
     String body = json.encode(data);
-    final response = await http.post(url,
+    final response = await http.post(Uri.parse('$serverUrl/auth/scoring/update_preference'),
         headers: {
           'cookie': cookie,
           'Content-Type': 'application/json; charset=UTF-8',

@@ -29,9 +29,9 @@ class WaterTrackerWidgetState extends State<WaterTrackerWidget> {
     DateTime now = DateTime.now();
     String formattedDate =
         '${now.year}-${_formatDateComponent(now.month)}-${_formatDateComponent(now.day)}';
-    var url =
-        Uri.http(serverUrl, '/query/daily_water', {'date': formattedDate});
-    final response = await http.get(url, headers: {'cookie': cookie});
+    final response = await http.get(
+        Uri.parse('$serverUrl/query/daily_water?date=$formattedDate'),
+        headers: {'cookie': cookie});
     if (response.statusCode == 200) {
       String jsonData = response.body;
       Map<String, dynamic> data = jsonDecode(jsonData);
@@ -48,13 +48,12 @@ class WaterTrackerWidgetState extends State<WaterTrackerWidget> {
 
     String formattedDateTime =
         '${now.year}-${_formatDateComponent(now.month)}-${_formatDateComponent(now.day)} ${_formatDateComponent(now.hour)}:${_formatDateComponent(now.minute)}:${_formatDateComponent(now.second)}';
-    var url = Uri.http(serverUrl, '/record/water');
     Map<String, dynamic> data = {
       "drinking_time": formattedDateTime,
       "drinking_volume": amount
     };
     String body = json.encode(data);
-    final response = await http.post(url,
+    final response = await http.post(Uri.parse('$serverUrl/record/water'),
         headers: {
           'cookie': cookie,
           'Content-Type': 'application/json; charset=UTF-8',
@@ -328,11 +327,10 @@ class SleepRecordPageState extends State<SleepRecordPage> {
     } else {
       datatype = 'wake_up_time';
     }
-    var url = Uri.http(serverUrl, '/record/sleep');
     Map<String, dynamic> data = {datatype: time, "sleep_date": formattedDate};
     String body = json.encode(data);
     try {
-      final response = await http.post(url,
+      final response = await http.post(Uri.parse('$serverUrl/record/sleep'),
           headers: {
             'cookie': cookie,
             'Content-Type': 'application/json; charset=UTF-8',
@@ -625,13 +623,12 @@ class WeightRecordPageState extends State<WeightRecordPage> {
     }
     String formattedDate = DateFormat('yyyy-M-d').format(selectedDate);
 
-    var url = Uri.http(serverUrl, '/record/body');
     Map<String, dynamic> data = {
       "date": formattedDate,
       "weight": currentWeight
     };
     String body = json.encode(data);
-    final response = await http.post(url,
+    final response = await http.post(Uri.parse('$serverUrl/record/body'),
         headers: {
           'cookie': cookie,
           'Content-Type': 'application/json; charset=UTF-8',
@@ -837,14 +834,13 @@ class MealRecordPageState extends State<MealRecordPage> {
     final String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate);
     final String formattedTime = DateFormat('HH:mm:ss').format(selectedTime);
     final String mealTime = '$formattedDate $formattedTime';
-    var url = Uri.http(serverUrl, '/record/meal');
     Map<String, dynamic> data = {
       "meal_time": mealTime,
       "meal_content": selectedMealType
     };
     String body = json.encode(data);
     try {
-      final response = await http.post(url,
+      final response = await http.post(Uri.parse('$serverUrl/record/meal'),
           headers: {
             'cookie': cookie,
             'Content-Type': 'application/json; charset=UTF-8',
@@ -1051,10 +1047,10 @@ class ExeRecordPageState extends State<ExeRecordPage> {
     DateTime now = DateTime.now();
     String formattedDate =
         '${now.year}-${_formatDateComponent(now.month)}-${_formatDateComponent(now.day)}';
-    var url =
-        Uri.http(serverUrl, '/query/week_exercise', {'date': formattedDate});
     try {
-      final response = await http.get(url, headers: {'cookie': cookie});
+      final response = await http.get(
+          Uri.parse('$serverUrl/query/week_exercise?date=$formattedDate'),
+          headers: {'cookie': cookie});
       if (response.statusCode == 200) {
         String jsonData = response.body;
         Map<String, dynamic> data = jsonDecode(jsonData);
@@ -1119,7 +1115,6 @@ class ExeRecordPageState extends State<ExeRecordPage> {
     final String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate);
     final String formattedTime = DateFormat('HH:mm:ss').format(selectedTime);
     final String exeTime = '$formattedDate $formattedTime';
-    var url = Uri.http(serverUrl, '/record/exercise');
     Map<String, dynamic> data = {
       "exercise_time": exeTime,
       "exercise_type": selectedExeType,
@@ -1127,7 +1122,7 @@ class ExeRecordPageState extends State<ExeRecordPage> {
     };
     String body = json.encode(data);
     try {
-      final response = await http.post(url,
+      final response = await http.post(Uri.parse('$serverUrl/record/exercise'),
           headers: {
             'cookie': cookie,
             'Content-Type': 'application/json; charset=UTF-8',

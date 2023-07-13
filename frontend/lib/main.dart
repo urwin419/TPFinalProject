@@ -19,8 +19,12 @@ import 'view.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-void main() => runApp(const MyApp());
-const serverUrl = '16.162.26.133:5000';
+void main() {
+  HttpOverrides.global = MyHttpOverrides();
+  runApp(const MyApp());
+}
+
+const serverUrl = 'http://16.162.26.133:5000';
 Map<String, dynamic> latestRecord = {
   'body': {
     'BMI': 19.6,
@@ -83,13 +87,20 @@ Map<String, dynamic> scores = {
 var scoreweek = "2023-07-03";
 var cookie = '';
 
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  static const String _title = 'Our App';
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: _title,
       initialRoute: '/',
       routes: {
         '/': (context) => const HomePage(),
@@ -198,7 +209,7 @@ class _LoginPageState extends State<LoginPage> {
       };
       String body = json.encode(data);
       try {
-        var response = await http.post(Uri.http(serverUrl, '/auth/login'),
+        var response = await http.post(Uri.parse('$serverUrl/auth/login'),
             headers: <String, String>{
               'Content-Type': 'application/json; charset=UTF-8',
               'Connection': 'keep-alive'
@@ -207,9 +218,7 @@ class _LoginPageState extends State<LoginPage> {
         setState(() {
           _isLoading = false;
         });
-        if (kDebugMode) {
-          print(response.statusCode);
-        }
+        print(response.body);
         if (response.statusCode == 200) {
           if (response.body == "Successfully login!") {
             var header = response.headers['set-cookie'];
@@ -396,6 +405,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isCoolingDown = false;
   int _coolDownTime = 60;
   Timer? _timer;
+
   void _validateEmail(String email) {
     bool isValid = EmailValidator.validate(email);
     setState(() {
@@ -447,7 +457,7 @@ class _RegisterPageState extends State<RegisterPage> {
         };
         String body = json.encode(data);
         var response = await http.post(
-          Uri.http(serverUrl, '/auth/captcha/get'),
+          Uri.parse('$serverUrl/auth/captcha/get'),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
           },
