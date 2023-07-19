@@ -79,7 +79,7 @@ Future<void> fetchScores(context) async {
   }
 }
 
-Future<List<dynamic>> fetchRecord(kind) async {
+Future<List<Map<String, dynamic>>?> fetchRecord(kind) async {
   String? cookieValue = await storage.read(key: 'cookie');
   String cookie = cookieValue ?? '';
   final response = await http
@@ -88,7 +88,8 @@ Future<List<dynamic>> fetchRecord(kind) async {
     'Content-Type': 'application/json; charset=UTF-8',
   });
   if (response.statusCode == 200) {
-    List jsonResponse = json.decode(response.body)["records"];
+    List<Map<String, dynamic>> jsonResponse =
+        json.decode(response.body)["records"].cast<Map<String, dynamic>>();
     return jsonResponse;
   } else {
     throw Exception('Unexpected error occured!');

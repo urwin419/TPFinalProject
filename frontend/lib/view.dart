@@ -2,14 +2,30 @@ import 'package:flutter/material.dart';
 import 'charts.dart';
 
 class ViewAll extends StatefulWidget {
-  const ViewAll({super.key,required this.type,required this.records});
+  const ViewAll({super.key, required this.type, required this.records});
   final String type;
-  final List records;
+  final List<Map<String, dynamic>> records;
 
   @override
   ViewAllState createState() => ViewAllState();
 }
+
 class ViewAllState extends State<ViewAll> {
+  Widget _buildChildWidget() {
+    if (widget.type == 'water') {
+      return DrinkingChart(
+        drinkingData: widget.records,
+      );
+    } else if (widget.type == 'body') {
+      return WeightChart(data: widget.records);
+    } else if (widget.type == 'meal') {
+      return MealTimeChart(data: widget.records);
+    } else if (widget.type == 'exercise') {
+      return ExerciseChart(exerciseData: widget.records);
+    } else {
+      return BedTimeChart(data: widget.records);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +37,9 @@ class ViewAllState extends State<ViewAll> {
           backgroundColor: Colors.green,
         ),
         body: Column(children: [
-          const Expanded(child: WaterConsumptionChart()),
+          Expanded(
+            child: _buildChildWidget(),
+          ),
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.all(16),

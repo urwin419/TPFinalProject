@@ -23,8 +23,7 @@ class ViewAllPage extends StatefulWidget {
 }
 
 class ViewAllPageState extends State<ViewAllPage> {
-  //late bool _isLoading;
-  List records = [];
+  List<Map<String, dynamic>> records = [];
 
   @override
   void initState() {
@@ -100,7 +99,7 @@ class ViewAllPageState extends State<ViewAllPage> {
               TextButton(
                 child: const Text('View all'),
                 onPressed: () async {
-                  records = await fetchRecord(type);
+                  records = (await fetchRecord(type))!;
                   Navigator.push(
                     context,
                     MaterialPageRoute(
