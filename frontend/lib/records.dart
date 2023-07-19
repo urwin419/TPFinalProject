@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'main.dart';
 import 'dart:ui' as ui;
+import 'other.dart';
 
 class WaterTrackerWidget extends StatefulWidget {
   const WaterTrackerWidget({super.key});
@@ -27,6 +28,8 @@ class WaterTrackerWidgetState extends State<WaterTrackerWidget> {
 
   void fetchDailyWaterIntake() async {
     DateTime now = DateTime.now();
+    String? cookieValue = await storage.read(key: 'cookie');
+    String cookie = cookieValue ?? '';
     String formattedDate =
         '${now.year}-${_formatDateComponent(now.month)}-${_formatDateComponent(now.day)}';
     final response = await http.get(
@@ -53,6 +56,8 @@ class WaterTrackerWidgetState extends State<WaterTrackerWidget> {
       "drinking_volume": amount
     };
     String body = json.encode(data);
+    String? cookieValue = await storage.read(key: 'cookie');
+    String cookie = cookieValue ?? '';
     final response = await http.post(Uri.parse('$serverUrl/record/water'),
         headers: {
           'cookie': cookie,
@@ -330,6 +335,8 @@ class SleepRecordPageState extends State<SleepRecordPage> {
     Map<String, dynamic> data = {datatype: time, "sleep_date": formattedDate};
     String body = json.encode(data);
     try {
+      String? cookieValue = await storage.read(key: 'cookie');
+      String cookie = cookieValue ?? '';
       final response = await http.post(Uri.parse('$serverUrl/record/sleep'),
           headers: {
             'cookie': cookie,
@@ -628,6 +635,8 @@ class WeightRecordPageState extends State<WeightRecordPage> {
       "weight": currentWeight
     };
     String body = json.encode(data);
+    String? cookieValue = await storage.read(key: 'cookie');
+    String cookie = cookieValue ?? '';
     final response = await http.post(Uri.parse('$serverUrl/record/body'),
         headers: {
           'cookie': cookie,
@@ -840,6 +849,8 @@ class MealRecordPageState extends State<MealRecordPage> {
     };
     String body = json.encode(data);
     try {
+      String? cookieValue = await storage.read(key: 'cookie');
+      String cookie = cookieValue ?? '';
       final response = await http.post(Uri.parse('$serverUrl/record/meal'),
           headers: {
             'cookie': cookie,
@@ -1048,6 +1059,8 @@ class ExeRecordPageState extends State<ExeRecordPage> {
     String formattedDate =
         '${now.year}-${_formatDateComponent(now.month)}-${_formatDateComponent(now.day)}';
     try {
+      String? cookieValue = await storage.read(key: 'cookie');
+      String cookie = cookieValue ?? '';
       final response = await http.get(
           Uri.parse('$serverUrl/query/week_exercise?date=$formattedDate'),
           headers: {'cookie': cookie});
@@ -1122,6 +1135,8 @@ class ExeRecordPageState extends State<ExeRecordPage> {
     };
     String body = json.encode(data);
     try {
+      String? cookieValue = await storage.read(key: 'cookie');
+      String cookie = cookieValue ?? '';
       final response = await http.post(Uri.parse('$serverUrl/record/exercise'),
           headers: {
             'cookie': cookie,
@@ -1372,5 +1387,240 @@ class ExeRecordPageState extends State<ExeRecordPage> {
                 ),
               ),
             ))));
+  }
+}
+
+class Mood {
+  final IconData icon;
+
+  Mood({required this.icon});
+}
+
+class MoodPage extends StatefulWidget {
+  const MoodPage({super.key});
+
+  @override
+  MoodPageState createState() => MoodPageState();
+}
+
+class MoodPageState extends State<MoodPage> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  int currentStep = 1;
+  int selectedIndex = 2;
+  DateTime selectedDate = DateTime.now();
+  List<Color> moodColors = [
+    Colors.red.shade800,
+    Colors.orange,
+    Colors.lightBlue.shade800,
+    Colors.blue.shade800,
+    Colors.green.shade800,
+  ];
+  List<Mood> moods = [
+    Mood(icon: Icons.mood_bad),
+    Mood(icon: Icons.sentiment_dissatisfied),
+    Mood(icon: Icons.sentiment_neutral),
+    Mood(icon: Icons.sentiment_satisfied),
+    Mood(icon: Icons.sentiment_very_satisfied),
+  ];
+  TextEditingController textEditingController = TextEditingController();
+  int maxTextCount = 140;
+
+  @override
+  void dispose() {
+    textEditingController.dispose();
+    super.dispose();
+  }
+
+  void postData() async {
+    final form = _formKey.currentState;
+    if (form!.validate()) {
+      form.save();
+      final String formattedDate =
+          DateFormat('yyyy-MM-dd').format(selectedDate);
+      Map<String, dynamic> data = {
+        "event_date": formattedDate,
+        "event": textEditingController.text.trim(),
+        "level": selectedIndex
+      };
+      String body = json.encode(data);
+      try {
+        String? cookieValue = await storage.read(key: 'cookie');
+        String cookie = cookieValue ?? '';
+        final response = await http.post(Uri.parse('$serverUrl/record/mood'),
+            headers: {
+              'cookie': cookie,
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+            body: body);
+        if (response.statusCode == 200 && response.body == 'success') {
+          return showDialog(
+            context: context,
+            builder: (BuildContext context) => AlertDialog(
+              content: const Text('You just have your MOOD recorded!'),
+              actions: <TextButton>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Close'),
+                )
+              ],
+            ),
+          );
+        } else {
+          showAutoHideAlertDialog(context, ["Request Failed"]);
+        }
+      } catch (e) {
+        showAutoHideAlertDialog(context, ["Failed", "Server unavailable now"]);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: moodColors[selectedIndex],
+      body: Column(
+        children: [
+          const SizedBox(height: 70),
+          Row(
+            children: [
+              const SizedBox(width: 20),
+              TextButton(
+                onPressed: () {
+                  if (currentStep > 1) {
+                    setState(() {
+                      currentStep--;
+                    });
+                  } else {
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: Icon(
+                  currentStep > 1 ? Icons.arrow_back : Icons.arrow_back_ios,
+                  color: Colors.white,
+                ),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () {
+                  if (currentStep == 1) {
+                    setState(() {
+                      currentStep++;
+                    });
+                  } else {
+                    postData();
+                  }
+                },
+                child: Icon(
+                  currentStep == 1 ? Icons.arrow_forward : Icons.check,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 20),
+            ],
+          ),
+          const SizedBox(height: 40),
+          Container(
+            padding: const EdgeInsets.all(20),
+            alignment: Alignment.centerLeft,
+            child: Text(
+              currentStep == 1 ? 'How is your mood today?' : 'What Happened?',
+              style: const TextStyle(fontSize: 18, color: Colors.white),
+            ),
+          ),
+          if (currentStep == 1) ...[
+            Expanded(
+              flex: 2,
+              child: Container(
+                alignment: Alignment.center,
+                child: Icon(
+                  moods[selectedIndex].icon,
+                  size: 300,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Swipe left/right or tap the indicator to change mood',
+              style: TextStyle(fontSize: 16, color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (int i = 0; i < moodColors.length; i++)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedIndex = i;
+                      });
+                    },
+                    child: Indicator(
+                      isSelected: selectedIndex == i,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+          if (currentStep == 2) ...[
+            const SizedBox(height: 50),
+            Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Form(
+                  key: _formKey,
+                  child: TextFormField(
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter some text';
+                      }
+                      return null;
+                    },
+                    controller: textEditingController,
+                    autocorrect: false,
+                    maxLength: maxTextCount,
+                    decoration: InputDecoration(
+                      hintText: 'Write here...',
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      counterText:
+                          '${textEditingController.text.length}/$maxTextCount',
+                      enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                    ),
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: null,
+                  ),
+                )),
+          ],
+          const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+}
+
+class Indicator extends StatelessWidget {
+  final bool isSelected;
+
+  const Indicator({Key? key, this.isSelected = false}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 5),
+      width: 30,
+      height: 10,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5),
+        color: isSelected ? Colors.white : Colors.grey,
+      ),
+    );
   }
 }

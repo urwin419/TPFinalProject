@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'main.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'other.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -28,6 +29,8 @@ class ProfilePageState extends State<ProfilePage> {
       "height": currentHeight
     };
     String body = json.encode(data);
+    String? cookieValue = await storage.read(key: 'cookie');
+    String cookie = cookieValue ?? '';
     final response = await http.post(Uri.parse('$serverUrl/record/body'),
         headers: {
           'cookie': cookie,
@@ -58,12 +61,15 @@ class ProfilePageState extends State<ProfilePage> {
   void _submitPreference() async {
     Map<String, dynamic> data = {"prefer_personal": healthRating};
     String body = json.encode(data);
-    final response = await http.post(Uri.parse('$serverUrl/auth/scoring/update_preference'),
-        headers: {
-          'cookie': cookie,
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: body);
+    String? cookieValue = await storage.read(key: 'cookie');
+    String cookie = cookieValue ?? '';
+    final response =
+        await http.post(Uri.parse('$serverUrl/auth/scoring/update_preference'),
+            headers: {
+              'cookie': cookie,
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+            body: body);
     if (response.statusCode == 200) {
       return showDialog(
         context: context,
@@ -86,111 +92,126 @@ class ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text('Profile Page'),
-          backgroundColor: Colors.green,
+    return MaterialApp(
+        title: 'Prizes',
+        theme: ThemeData(
+          primaryColor: Colors.green[900],
+          scaffoldBackgroundColor: Colors.green[800],
         ),
-        body: Container(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage("assets/images/profile.png"),
-              fit: BoxFit.cover,
-            ),
+        home: Scaffold(
+          appBar: AppBar(
+            title: const Text('Profile Page'),
+            backgroundColor: Colors.green,
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Opacity(
-                  opacity: 0.8,
-                  child: Card(
-                    elevation: 2.0,
-                    child: ListTile(
-                      title: const Text(
-                        'Scoring Preferrence',
-                        style: TextStyle(
-                          fontSize: 24.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      trailing: Switch(
-                        value: healthRating,
-                        onChanged: (newValue) {
-                          setState(() {
-                            healthRating = newValue;
-                          });
-                          _submitPreference();
-                        },
-                      ),
-                      subtitle: const Text('Set the way we score you health.'),
-                    ),
-                  )),
-              Opacity(
-                  opacity: 0.8,
-                  child: Card(
+          body: Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/images/profile.png"),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Opacity(
+                    opacity: 0.8,
+                    child: Card(
                       elevation: 2.0,
                       child: ListTile(
-                          title: const Text(
-                            'Height(cm)',
-                            style: TextStyle(
-                              fontSize: 24.0,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        title: const Text(
+                          'Scoring Preferrence',
+                          style: TextStyle(
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.bold,
                           ),
-                          trailing: Text('$currentHeight'),
-                          subtitle: const Text('Set your height.'),
-                          onTap: () {
-                            showDialog(
-                                context: context,
-                                builder: (BuildContext dialogContext) {
-                                  return AlertDialog(
-                                    title: const Text('Height(cm)'),
-                                    content: SizedBox(
-                                        height: 75,
-                                        child: SingleChildScrollView(
-                                            child: Form(
-                                          key: _formKey,
-                                          child: Column(
-                                            children: [
-                                              TextFormField(
-                                                keyboardType:
-                                                    TextInputType.number,
-                                                validator: (value) {
-                                                  if (value!.isEmpty) {
-                                                    return 'Please enter your exercise duration';
-                                                  }
-                                                  return null;
-                                                },
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    if (value.isEmpty) {
-                                                      currentHeight = 0.0;
-                                                    } else {
-                                                      currentHeight =
-                                                          double.parse(value);
+                        ),
+                        trailing: Switch(
+                          value: healthRating,
+                          onChanged: (newValue) {
+                            setState(() {
+                              healthRating = newValue;
+                            });
+                            _submitPreference();
+                          },
+                        ),
+                        subtitle:
+                            const Text('Set the way we score you health.'),
+                      ),
+                    )),
+                Opacity(
+                    opacity: 0.8,
+                    child: Card(
+                        elevation: 2.0,
+                        child: ListTile(
+                            title: const Text(
+                              'Height(cm)',
+                              style: TextStyle(
+                                fontSize: 24.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            trailing: Text('$currentHeight'),
+                            subtitle: const Text('Set your height.'),
+                            onTap: () {
+                              showDialog(
+                                  context: context,
+                                  builder: (BuildContext dialogContext) {
+                                    return AlertDialog(
+                                      title: const Text('Height(cm)'),
+                                      content: SizedBox(
+                                          height: 75,
+                                          child: SingleChildScrollView(
+                                              child: Form(
+                                            key: _formKey,
+                                            child: Column(
+                                              children: [
+                                                TextFormField(
+                                                  keyboardType:
+                                                      TextInputType.number,
+                                                  validator: (value) {
+                                                    if (value!.isEmpty) {
+                                                      return 'Please enter your exercise duration';
                                                     }
-                                                  });
-                                                },
-                                              ),
-                                            ],
-                                          ),
-                                        ))),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.pop(dialogContext);
-                                        },
-                                        child: const Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed: _submitData,
-                                        child: const Text('Confirm'),
-                                      ),
-                                    ],
-                                  );
-                                });
-                          }))),
-            ],
+                                                    return null;
+                                                  },
+                                                  onChanged: (value) {
+                                                    setState(() {
+                                                      if (value.isEmpty) {
+                                                        currentHeight = 0.0;
+                                                      } else {
+                                                        currentHeight =
+                                                            double.parse(value);
+                                                      }
+                                                    });
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ))),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(dialogContext);
+                                          },
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: _submitData,
+                                          child: const Text('Confirm'),
+                                        ),
+                                      ],
+                                    );
+                                  });
+                            }))),
+              ],
+            ),
+          ),
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: Colors.green,
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Icon(Icons.arrow_back),
           ),
         ));
   }

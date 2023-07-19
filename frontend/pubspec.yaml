@@ -20,6 +20,9 @@ dependencies:
   shared_preferences: ^2.1.2
   email_validator: ^2.1.17
   google_fonts: ^4.0.4
+  flutter_secure_storage: ^8.0.0
+  table_calendar: ^3.0.9
+  syncfusion_flutter_charts: ^22.1.39
 
 dev_dependencies:
   flutter_test:
@@ -31,4 +34,5 @@ dev_dependencies:
 flutter:
   assets:
     - assets/images/
+    - assets/images/prize/
   uses-material-design: true

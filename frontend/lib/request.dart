@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'main.dart';
+import 'other.dart';
 
 Future<void> fetchLatestRecord(context) async {
   try {
+    String? cookieValue = await storage.read(key: 'cookie');
+    String cookie = cookieValue ?? '';
     final response =
         await http.get(Uri.parse('$serverUrl/query/latest_record'), headers: {
       'cookie': cookie,
@@ -13,7 +16,6 @@ Future<void> fetchLatestRecord(context) async {
     if (response.statusCode == 200) {
       final jsonData = jsonDecode(response.body);
       latestRecord = jsonData;
-      print(response.body);
     } else {
       showAutoHideAlertDialog(context, ["Query Failed"]);
     }
@@ -24,6 +26,8 @@ Future<void> fetchLatestRecord(context) async {
 
 Future<void> fetchPlan(context) async {
   try {
+    String? cookieValue = await storage.read(key: 'cookie');
+    String cookie = cookieValue ?? '';
     final response = await http.get(
         Uri.parse('$serverUrl/query/record?record_type=plan&latest=True'),
         headers: {
@@ -33,7 +37,6 @@ Future<void> fetchPlan(context) async {
     if (response.statusCode == 200) {
       final jsonData = jsonDecode(response.body);
       plan = jsonData['record'];
-      print(response.body);
     } else {
       showAutoHideAlertDialog(context, ["Query Failed"]);
     }
@@ -42,19 +45,28 @@ Future<void> fetchPlan(context) async {
   }
 }
 
+String _formatDateComponent(int component) {
+  return component.toString().padLeft(2, '0');
+}
+
 Future<void> fetchScores(context) async {
   try {
-    final response =
-        await http.get(Uri.parse('$serverUrl/query/health_scores'), headers: {
-      'cookie': cookie,
-      'Content-Type': 'application/json; charset=UTF-8',
-    });
+    DateTime now = DateTime.now();
+    String formattedDate =
+        '${now.year}-${_formatDateComponent(now.month)}-${_formatDateComponent(now.day)}';
+    String? cookieValue = await storage.read(key: 'cookie');
+    String cookie = cookieValue ?? '';
+    final response = await http.get(
+        Uri.parse('$serverUrl/query/health_scores?date=$formattedDate'),
+        headers: {
+          'cookie': cookie,
+          'Content-Type': 'application/json; charset=UTF-8',
+        });
     if (response.statusCode == 200) {
       final jsonData = jsonDecode(response.body);
       List entries = jsonData.entries.toList();
       if (entries.isNotEmpty) {
         MapEntry lastEntry = entries.last;
-        scoreweek = lastEntry.key;
         scores = lastEntry.value;
       } else {
         showAutoHideAlertDialog(context, ["MAP EMPTY"]);
@@ -68,12 +80,13 @@ Future<void> fetchScores(context) async {
 }
 
 Future<List<dynamic>> fetchRecord(kind) async {
-  final response = await http.get(
-      Uri.parse('$serverUrl/query/health_scores?record_type=$kind'),
-      headers: {
-        'cookie': cookie,
-        'Content-Type': 'application/json; charset=UTF-8',
-      });
+  String? cookieValue = await storage.read(key: 'cookie');
+  String cookie = cookieValue ?? '';
+  final response = await http
+      .get(Uri.parse('$serverUrl/query/record?record_type=$kind'), headers: {
+    'cookie': cookie,
+    'Content-Type': 'application/json; charset=UTF-8',
+  });
   if (response.statusCode == 200) {
     List jsonResponse = json.decode(response.body)["records"];
     return jsonResponse;
@@ -82,27 +95,22 @@ Future<List<dynamic>> fetchRecord(kind) async {
   }
 }
 
-Future<List<dynamic>> fetchQAHistory() async {
+Future<Map<String, dynamic>> fetchPrizes() async {
   try {
-    final response = await http
-        .get(Uri.parse('$serverUrl/query/qa_history?num=10'), headers: {
-      'cookie': cookie,
-      'Content-Type': 'application/json; charset=UTF-8',
-    });
+    DateTime now = DateTime.now();
+    String formattedDate =
+        '${now.year}-${_formatDateComponent(now.month)}-${_formatDateComponent(now.day)}';
+    String? cookieValue = await storage.read(key: 'cookie');
+    String cookie = cookieValue ?? '';
+    final response = await http.get(
+        Uri.parse('$serverUrl/query/achievement?date=$formattedDate'),
+        headers: {
+          'cookie': cookie,
+          'Content-Type': 'application/json; charset=UTF-8',
+        });
     if (response.statusCode == 200) {
       final jsonData = jsonDecode(response.body);
-      List qaHistory = jsonData['history'];
-      if (qaHistory.isNotEmpty) {
-        return qaHistory;
-      } else {
-        return [
-          {
-            "answer": "Ask your first question!",
-            "qa_time": "2023-07-09T00:00:00",
-            "question": "COME!"
-          }
-        ];
-      }
+      return jsonData;
     } else {
       throw Exception('Unexpected error occured!');
     }

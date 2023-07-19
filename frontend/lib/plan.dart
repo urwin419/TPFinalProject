@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:number_text_input_formatter/number_text_input_formatter.dart';
 import 'main.dart';
 import 'package:http/http.dart' as http;
+import 'other.dart';
 
 class PlanPage extends StatefulWidget {
   const PlanPage({super.key});
@@ -96,6 +97,8 @@ class PlanPagestate extends State<PlanPage> {
       "start_weight": _startweightController.text,
     };
     String body = json.encode(data);
+    String? cookieValue = await storage.read(key: 'cookie');
+    String cookie = cookieValue ?? '';
     var response = await http.post(
       Uri.parse('$serverUrl/record/plan'),
       headers: <String, String>{
@@ -108,7 +111,7 @@ class PlanPagestate extends State<PlanPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const MainPage(initialWidget: 'D'),
+          builder: (context) => const MainPage(),
         ),
       );
     } else {
@@ -119,447 +122,464 @@ class PlanPagestate extends State<PlanPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Plan'),
-        backgroundColor: Colors.green,
-      ),
-      body: Container(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage("assets/images/plan.png"),
-              fit: BoxFit.cover,
-            ),
+    return MaterialApp(
+        title: 'Prizes',
+        theme: ThemeData(
+          primaryColor: Colors.green[900],
+          scaffoldBackgroundColor: Colors.green[800],
+        ),
+        home: Scaffold(
+          appBar: AppBar(
+            title: const Text('Plan'),
+            backgroundColor: Colors.green,
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CardListItem(
-                icon: Icons.monitor_weight,
-                title: 'Weight',
-                subtitle: 'Manage your weight',
-                isCompleted: completeness[0],
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext dialogContext) => AlertDialog(
-                      title: const Text('SET YOUR IDEAL WEIGHT'),
-                      content: SizedBox(
-                          height: 150,
-                          child: Column(children: [
-                            Expanded(
-                                child: TextFormField(
-                              controller: _weightController,
-                              inputFormatters: [
-                                NumberTextInputFormatter(
-                                  integerDigits: 4,
-                                  decimalDigits: 2,
-                                  maxValue: '1000.00',
-                                  decimalSeparator: '.',
-                                  groupDigits: 3,
-                                  groupSeparator: ',',
-                                  allowNegative: false,
-                                  overrideDecimalPoint: true,
-                                  insertDecimalPoint: false,
-                                  insertDecimalDigits: true,
-                                ),
-                              ],
-                              textAlign: TextAlign.center,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'WEIGHT GOAL(kg)',
-                                hintText: '80.0',
-                              ),
-                            )),
-                            Expanded(
-                                child: TextFormField(
-                              controller: _startweightController,
-                              inputFormatters: [
-                                NumberTextInputFormatter(
-                                  integerDigits: 4,
-                                  decimalDigits: 2,
-                                  maxValue: '1000.00',
-                                  decimalSeparator: '.',
-                                  groupDigits: 3,
-                                  groupSeparator: ',',
-                                  allowNegative: false,
-                                  overrideDecimalPoint: true,
-                                  insertDecimalPoint: false,
-                                  insertDecimalDigits: true,
-                                ),
-                              ],
-                              textAlign: TextAlign.center,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'START WEIGHT(kg)',
-                                hintText: '80.0',
-                              ),
-                            )),
-                          ])),
-                      actions: [
-                        ElevatedButton(
-                          child: const Text('CANCEL'),
-                          onPressed: () {
-                            setState(() {
-                              completeness[0] = false;
-                            });
-                            _weightController.text = '60';
-                            Navigator.pop(dialogContext);
-                          },
-                        ),
-                        ElevatedButton(
-                          child: const Text('OK'),
-                          onPressed: () {
-                            setState(() {
-                              completeness[0] = true;
-                            });
-                            Navigator.pop(dialogContext);
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
+          body: Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage("assets/images/plan.png"),
+                  fit: BoxFit.cover,
+                ),
               ),
-              CardListItem(
-                icon: Icons.access_time,
-                title: 'Mealtime',
-                subtitle: 'Manage meal timings',
-                isCompleted: completeness[1],
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext dialogContext) => AlertDialog(
-                      title: const Text('Manage your meal timings'),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      content: SizedBox(
-                          child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextFormField(
-                            controller: _breakfastController,
-                            readOnly: true,
-                            onTap: () {
-                              _selectTime(context, _breakfastController);
-                            },
-                            decoration: const InputDecoration(
-                              labelText: 'Breakfast Time',
-                            ),
-                          ),
-                          TextFormField(
-                            controller: _lunchController,
-                            readOnly: true,
-                            onTap: () {
-                              _selectTime(context, _lunchController);
-                            },
-                            decoration: const InputDecoration(
-                              labelText: 'Lunch Time',
-                            ),
-                          ),
-                          TextFormField(
-                            controller: _dinnerController,
-                            readOnly: true,
-                            onTap: () {
-                              _selectTime(context, _dinnerController);
-                            },
-                            decoration: const InputDecoration(
-                              labelText: 'Dinner Time',
-                            ),
-                          ),
-                          const SizedBox(height: 12.0),
-                        ],
-                      )),
-                      actions: [
-                        ElevatedButton(
-                          child: const Text('Cancel'),
-                          onPressed: () {
-                            setState(() {
-                              completeness[1] = false;
-                            });
-                            _breakfastController.text = '8:00';
-                            _lunchController.text = '12:00';
-                            _dinnerController.text = '18:00';
-                            Navigator.pop(dialogContext);
-                          },
-                        ),
-                        ElevatedButton(
-                          child: const Text('OK'),
-                          onPressed: () {
-                            setState(() {
-                              completeness[1] = true;
-                            });
-                            Navigator.pop(dialogContext);
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              CardListItem(
-                icon: Icons.fitness_center,
-                title: 'Exercise',
-                subtitle: 'Track your workout',
-                isCompleted: completeness[2],
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext dialogContext) => AlertDialog(
-                      title: const Text('Set your exercise goal for a week'),
-                      content: TextField(
-                        controller: _exetimeController,
-                        inputFormatters: [
-                          NumberTextInputFormatter(
-                            integerDigits: 5,
-                            decimalDigits: 0,
-                            maxValue: '10080',
-                            decimalSeparator: '.',
-                            groupDigits: 3,
-                            groupSeparator: ',',
-                            allowNegative: false,
-                            overrideDecimalPoint: true,
-                            insertDecimalPoint: false,
-                            insertDecimalDigits: true,
-                          ),
-                        ],
-                        textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Exeercise Duration (min)',
-                          hintText: '150',
-                        ),
-                      ),
-                      actions: [
-                        ElevatedButton(
-                          child: const Text('Cancel'),
-                          onPressed: () {
-                            setState(() {
-                              completeness[2] = false;
-                            });
-                            _exetimeController.text = '150';
-                            Navigator.pop(dialogContext);
-                          },
-                        ),
-                        ElevatedButton(
-                          child: const Text('OK'),
-                          onPressed: () {
-                            setState(() {
-                              completeness[2] = true;
-                            });
-                            Navigator.pop(dialogContext);
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              CardListItem(
-                icon: Icons.local_drink,
-                title: 'Water',
-                subtitle: 'Stay hydrated',
-                isCompleted: completeness[3],
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext dialogContext) => AlertDialog(
-                      title: const Text('Set your daily water dringking goal'),
-                      content: TextField(
-                        controller: _waterController,
-                        inputFormatters: [
-                          NumberTextInputFormatter(
-                            integerDigits: 4,
-                            decimalDigits: 0,
-                            maxValue: '1000',
-                            decimalSeparator: '.',
-                            groupDigits: 3,
-                            groupSeparator: ',',
-                            allowNegative: false,
-                            overrideDecimalPoint: true,
-                            insertDecimalPoint: false,
-                            insertDecimalDigits: true,
-                          ),
-                        ],
-                        textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Water (ml)',
-                          hintText: '2000',
-                        ),
-                      ),
-                      actions: [
-                        ElevatedButton(
-                          child: const Text('Cancel'),
-                          onPressed: () {
-                            setState(() {
-                              completeness[3] = false;
-                            });
-                            _waterController.text = '2000';
-                            Navigator.pop(dialogContext);
-                          },
-                        ),
-                        ElevatedButton(
-                          child: const Text('OK'),
-                          onPressed: () {
-                            setState(() {
-                              completeness[3] = true;
-                            });
-                            Navigator.pop(dialogContext);
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              CardListItem(
-                icon: Icons.hotel,
-                title: 'Sleep',
-                subtitle: 'Manage sleep schedule',
-                isCompleted: completeness[4],
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext dialogContext) => AlertDialog(
-                      title: const Text('Set your sleep timings'),
-                      content: SizedBox(
-                          child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextFormField(
-                            controller: _sleepController,
-                            readOnly: true,
-                            onTap: () {
-                              _selectTime(context, _sleepController);
-                            },
-                            decoration: const InputDecoration(
-                              labelText: 'Go to bed',
-                            ),
-                          ),
-                          TextFormField(
-                            controller: _wakeController,
-                            readOnly: true,
-                            onTap: () {
-                              _selectTime(context, _wakeController);
-                            },
-                            decoration: const InputDecoration(
-                              labelText: 'Wake up',
-                            ),
-                          ),
-                          const SizedBox(height: 12.0),
-                        ],
-                      )),
-                      actions: [
-                        ElevatedButton(
-                          child: const Text('Cancel'),
-                          onPressed: () {
-                            setState(() {
-                              completeness[4] = false;
-                            });
-                            _sleepController.text = "23:00";
-                            _wakeController.text = "8:00";
-                            Navigator.pop(dialogContext);
-                          },
-                        ),
-                        ElevatedButton(
-                          child: const Text('OK'),
-                          onPressed: () {
-                            setState(() {
-                              completeness[4] = true;
-                            });
-                            Navigator.pop(dialogContext);
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                      child: Padding(
-                          padding: const EdgeInsets.all(16.0), // 设置所需的填充值
-                          child: ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                  Colors.green),
+                  CardListItem(
+                    icon: Icons.monitor_weight,
+                    title: 'Weight',
+                    subtitle: 'Manage your weight',
+                    isCompleted: completeness[0],
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext dialogContext) => AlertDialog(
+                          title: const Text('SET YOUR IDEAL WEIGHT'),
+                          content: SizedBox(
+                              height: 150,
+                              child: Column(children: [
+                                Expanded(
+                                    child: TextFormField(
+                                  controller: _weightController,
+                                  inputFormatters: [
+                                    NumberTextInputFormatter(
+                                      integerDigits: 4,
+                                      decimalDigits: 2,
+                                      maxValue: '1000.00',
+                                      decimalSeparator: '.',
+                                      groupDigits: 3,
+                                      groupSeparator: ',',
+                                      allowNegative: false,
+                                      overrideDecimalPoint: true,
+                                      insertDecimalPoint: false,
+                                      insertDecimalDigits: true,
+                                    ),
+                                  ],
+                                  textAlign: TextAlign.center,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'WEIGHT GOAL(kg)',
+                                    hintText: '80.0',
+                                  ),
+                                )),
+                                Expanded(
+                                    child: TextFormField(
+                                  controller: _startweightController,
+                                  inputFormatters: [
+                                    NumberTextInputFormatter(
+                                      integerDigits: 4,
+                                      decimalDigits: 2,
+                                      maxValue: '1000.00',
+                                      decimalSeparator: '.',
+                                      groupDigits: 3,
+                                      groupSeparator: ',',
+                                      allowNegative: false,
+                                      overrideDecimalPoint: true,
+                                      insertDecimalPoint: false,
+                                      insertDecimalDigits: true,
+                                    ),
+                                  ],
+                                  textAlign: TextAlign.center,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'START WEIGHT(kg)',
+                                    hintText: '80.0',
+                                  ),
+                                )),
+                              ])),
+                          actions: [
+                            ElevatedButton(
+                              child: const Text('CANCEL'),
+                              onPressed: () {
+                                setState(() {
+                                  completeness[0] = false;
+                                });
+                                _weightController.text = '60';
+                                Navigator.pop(dialogContext);
+                              },
                             ),
-                            child: const Text('Cancel'),
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                          ))),
-                  Expanded(
-                      child: Padding(
-                          padding: const EdgeInsets.all(16.0), // 设置所需的填充值
-                          child: ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                  Colors.green),
+                            ElevatedButton(
+                              child: const Text('OK'),
+                              onPressed: () {
+                                setState(() {
+                                  completeness[0] = true;
+                                });
+                                Navigator.pop(dialogContext);
+                              },
                             ),
-                            child: const Text('Comfirm'),
-                            onPressed: () {
-                              if (completeness
-                                  .every((element) => element == true)) {
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext dialogContext) =>
-                                        AlertDialog(
-                                          title: const Text('YOUR PLAN'),
-                                          content: SingleChildScrollView(
-                                              child: Column(
-                                            children: [
-                                              Text(
-                                                  'WEIGHT: ${_weightController.text}kg'),
-                                              Text(
-                                                  'BREAKFAST: ${_breakfastController.text}'),
-                                              Text(
-                                                  'LUNCH: ${_lunchController.text}'),
-                                              Text(
-                                                  'DINNER: ${_dinnerController.text}'),
-                                              Text(
-                                                  'EXERCISE: ${_exetimeController.text} min'),
-                                              Text(
-                                                  'WATER: ${_waterController.text} ml'),
-                                              Text(
-                                                  'BED: ${_sleepController.text}'),
-                                              Text(
-                                                  'WAKEUP: ${_wakeController.text}'),
-                                            ],
-                                          )),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text('CANCEL'),
-                                            ),
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                _sendDataRequest();
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text('SUBMIT'),
-                                            ),
-                                          ],
-                                        ));
-                              } else {
-                                showAutoHideAlertDialog(context, [
-                                  "WARNING",
-                                  "YOU HAVE NOT FINISHED YOUR PLAN"
-                                ]);
-                              }
-                            },
-                          ))),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  CardListItem(
+                    icon: Icons.access_time,
+                    title: 'Mealtime',
+                    subtitle: 'Manage meal timings',
+                    isCompleted: completeness[1],
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext dialogContext) => AlertDialog(
+                          title: const Text('Manage your meal timings'),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          content: SizedBox(
+                              child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextFormField(
+                                controller: _breakfastController,
+                                readOnly: true,
+                                onTap: () {
+                                  _selectTime(context, _breakfastController);
+                                },
+                                decoration: const InputDecoration(
+                                  labelText: 'Breakfast Time',
+                                ),
+                              ),
+                              TextFormField(
+                                controller: _lunchController,
+                                readOnly: true,
+                                onTap: () {
+                                  _selectTime(context, _lunchController);
+                                },
+                                decoration: const InputDecoration(
+                                  labelText: 'Lunch Time',
+                                ),
+                              ),
+                              TextFormField(
+                                controller: _dinnerController,
+                                readOnly: true,
+                                onTap: () {
+                                  _selectTime(context, _dinnerController);
+                                },
+                                decoration: const InputDecoration(
+                                  labelText: 'Dinner Time',
+                                ),
+                              ),
+                              const SizedBox(height: 12.0),
+                            ],
+                          )),
+                          actions: [
+                            ElevatedButton(
+                              child: const Text('Cancel'),
+                              onPressed: () {
+                                setState(() {
+                                  completeness[1] = false;
+                                });
+                                _breakfastController.text = '8:00';
+                                _lunchController.text = '12:00';
+                                _dinnerController.text = '18:00';
+                                Navigator.pop(dialogContext);
+                              },
+                            ),
+                            ElevatedButton(
+                              child: const Text('OK'),
+                              onPressed: () {
+                                setState(() {
+                                  completeness[1] = true;
+                                });
+                                Navigator.pop(dialogContext);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  CardListItem(
+                    icon: Icons.fitness_center,
+                    title: 'Exercise',
+                    subtitle: 'Track your workout',
+                    isCompleted: completeness[2],
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext dialogContext) => AlertDialog(
+                          title:
+                              const Text('Set your exercise goal for a week'),
+                          content: TextField(
+                            controller: _exetimeController,
+                            inputFormatters: [
+                              NumberTextInputFormatter(
+                                integerDigits: 5,
+                                decimalDigits: 0,
+                                maxValue: '10080',
+                                decimalSeparator: '.',
+                                groupDigits: 3,
+                                groupSeparator: ',',
+                                allowNegative: false,
+                                overrideDecimalPoint: true,
+                                insertDecimalPoint: false,
+                                insertDecimalDigits: true,
+                              ),
+                            ],
+                            textAlign: TextAlign.center,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Exeercise Duration (min)',
+                              hintText: '150',
+                            ),
+                          ),
+                          actions: [
+                            ElevatedButton(
+                              child: const Text('Cancel'),
+                              onPressed: () {
+                                setState(() {
+                                  completeness[2] = false;
+                                });
+                                _exetimeController.text = '150';
+                                Navigator.pop(dialogContext);
+                              },
+                            ),
+                            ElevatedButton(
+                              child: const Text('OK'),
+                              onPressed: () {
+                                setState(() {
+                                  completeness[2] = true;
+                                });
+                                Navigator.pop(dialogContext);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  CardListItem(
+                    icon: Icons.local_drink,
+                    title: 'Water',
+                    subtitle: 'Stay hydrated',
+                    isCompleted: completeness[3],
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext dialogContext) => AlertDialog(
+                          title:
+                              const Text('Set your daily water dringking goal'),
+                          content: TextField(
+                            controller: _waterController,
+                            inputFormatters: [
+                              NumberTextInputFormatter(
+                                integerDigits: 4,
+                                decimalDigits: 0,
+                                maxValue: '1000',
+                                decimalSeparator: '.',
+                                groupDigits: 3,
+                                groupSeparator: ',',
+                                allowNegative: false,
+                                overrideDecimalPoint: true,
+                                insertDecimalPoint: false,
+                                insertDecimalDigits: true,
+                              ),
+                            ],
+                            textAlign: TextAlign.center,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Water (ml)',
+                              hintText: '2000',
+                            ),
+                          ),
+                          actions: [
+                            ElevatedButton(
+                              child: const Text('Cancel'),
+                              onPressed: () {
+                                setState(() {
+                                  completeness[3] = false;
+                                });
+                                _waterController.text = '2000';
+                                Navigator.pop(dialogContext);
+                              },
+                            ),
+                            ElevatedButton(
+                              child: const Text('OK'),
+                              onPressed: () {
+                                setState(() {
+                                  completeness[3] = true;
+                                });
+                                Navigator.pop(dialogContext);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  CardListItem(
+                    icon: Icons.hotel,
+                    title: 'Sleep',
+                    subtitle: 'Manage sleep schedule',
+                    isCompleted: completeness[4],
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext dialogContext) => AlertDialog(
+                          title: const Text('Set your sleep timings'),
+                          content: SizedBox(
+                              child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextFormField(
+                                controller: _sleepController,
+                                readOnly: true,
+                                onTap: () {
+                                  _selectTime(context, _sleepController);
+                                },
+                                decoration: const InputDecoration(
+                                  labelText: 'Go to bed',
+                                ),
+                              ),
+                              TextFormField(
+                                controller: _wakeController,
+                                readOnly: true,
+                                onTap: () {
+                                  _selectTime(context, _wakeController);
+                                },
+                                decoration: const InputDecoration(
+                                  labelText: 'Wake up',
+                                ),
+                              ),
+                              const SizedBox(height: 12.0),
+                            ],
+                          )),
+                          actions: [
+                            ElevatedButton(
+                              child: const Text('Cancel'),
+                              onPressed: () {
+                                setState(() {
+                                  completeness[4] = false;
+                                });
+                                _sleepController.text = "23:00";
+                                _wakeController.text = "8:00";
+                                Navigator.pop(dialogContext);
+                              },
+                            ),
+                            ElevatedButton(
+                              child: const Text('OK'),
+                              onPressed: () {
+                                setState(() {
+                                  completeness[4] = true;
+                                });
+                                Navigator.pop(dialogContext);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                          child: Padding(
+                              padding: const EdgeInsets.all(16.0), // 设置所需的填充值
+                              child: ElevatedButton(
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Colors.green),
+                                ),
+                                child: const Text('Cancel'),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                              ))),
+                      Expanded(
+                          child: Padding(
+                              padding: const EdgeInsets.all(16.0), // 设置所需的填充值
+                              child: ElevatedButton(
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Colors.green),
+                                ),
+                                child: const Text('Comfirm'),
+                                onPressed: () {
+                                  if (completeness
+                                      .every((element) => element == true)) {
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext dialogContext) =>
+                                            AlertDialog(
+                                              title: const Text('YOUR PLAN'),
+                                              content: SingleChildScrollView(
+                                                  child: Column(
+                                                children: [
+                                                  Text(
+                                                      'WEIGHT: ${_weightController.text}kg'),
+                                                  Text(
+                                                      'BREAKFAST: ${_breakfastController.text}'),
+                                                  Text(
+                                                      'LUNCH: ${_lunchController.text}'),
+                                                  Text(
+                                                      'DINNER: ${_dinnerController.text}'),
+                                                  Text(
+                                                      'EXERCISE: ${_exetimeController.text} min'),
+                                                  Text(
+                                                      'WATER: ${_waterController.text} ml'),
+                                                  Text(
+                                                      'BED: ${_sleepController.text}'),
+                                                  Text(
+                                                      'WAKEUP: ${_wakeController.text}'),
+                                                ],
+                                              )),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: const Text('CANCEL'),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    _sendDataRequest();
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: const Text('SUBMIT'),
+                                                ),
+                                              ],
+                                            ));
+                                  } else {
+                                    showAutoHideAlertDialog(context, [
+                                      "WARNING",
+                                      "YOU HAVE NOT FINISHED YOUR PLAN"
+                                    ]);
+                                  }
+                                },
+                              ))),
+                    ],
+                  ),
                 ],
-              ),
-            ],
-          )),
-    );
+              )),
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: Colors.green,
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Icon(Icons.arrow_back),
+          ),
+        ));
   }
 }
 
