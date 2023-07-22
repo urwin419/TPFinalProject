@@ -4,15 +4,17 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:group_project/request.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:http/http.dart' as http;
 import 'main.dart';
+import 'analysis.dart';
 import 'records.dart';
 import 'dart:ui' as ui;
-
 import 'view.dart';
 
 class ViewAllPage extends StatefulWidget {
@@ -28,6 +30,11 @@ class ViewAllPageState extends State<ViewAllPage> {
   @override
   void initState() {
     super.initState();
+  }
+
+@override
+  void dispose() {
+    super.dispose();
   }
 
   Widget _buildHealthScoreModule() {
@@ -96,20 +103,56 @@ class ViewAllPageState extends State<ViewAllPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              TextButton(
-                child: const Text('View all'),
-                onPressed: () async {
-                  records = (await fetchRecord(type))!;
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => ViewAll(
-                              records: records,
-                              type: type,
-                            )),
-                  );
-                },
-              ),
+              Row(
+                children: [
+                  TextButton(
+                    child: const Text(
+                      'All',
+                      style: TextStyle(
+                        color: Colors.green,
+                      ),
+                    ),
+                    onPressed: () async {
+                      records = (await fetchRecord(type))!;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ViewAll(
+                                  records: records,
+                                  type: type,
+                                )),
+                      );
+                    },
+                  ),
+                  const SizedBox(
+                    width: 20,
+                  ),
+                  TextButton(
+                    child: const Text(
+                      'Analysis',
+                      style: TextStyle(
+                        color: Colors.green,
+                      ),
+                    ),
+                    onPressed: () async {
+                      records = (await fetchRecord(type))!;
+                      String analysis = '';
+                      if (type == 'water') {
+                        analysis = generateWaterAnalysis(records);
+                      } else if (type == 'body') {
+                        analysis = generateBodyAnalysis(records);
+                      } else if (type == 'meal') {
+                        analysis = generateMealAnalysis(records);
+                      } else if (type == 'exercise') {
+                        analysis = generateExerciseAnalysis(records);
+                      } else {
+                        analysis = generateSleepAnalysis(records);
+                      }
+                      showAnalysisDialog(context, analysis);
+                    },
+                  ),
+                ],
+              )
             ],
           ),
           trailing: Text(
@@ -199,6 +242,11 @@ class ChatPageState extends State<ChatPage> {
     fetchQAHistory();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<void> fetchQAHistory() async {
     setState(() {
       _isLoading = true;
@@ -217,6 +265,7 @@ class ChatPageState extends State<ChatPage> {
         List qaHistory = jsonData['history'];
         if (qaHistory.isNotEmpty) {
           chatHistory = qaHistory;
+          
         } else {
           chatHistory = [
             {
@@ -290,6 +339,7 @@ class ChatPageState extends State<ChatPage> {
               children: [
                 Expanded(
                   child: ListView.builder(
+                    reverse: true,
                     itemCount: chatHistory.length * 2,
                     itemBuilder: (BuildContext context, int index) {
                       final chat =
@@ -299,10 +349,10 @@ class ChatPageState extends State<ChatPage> {
                         return Container();
                       }
                       final String message =
-                          isUser ? chat['answer']! : chat['question']!;
+                          isUser ? chat['question']! : chat['answer']!;
                       return Bubble(
                         message: message,
-                        isUser: !isUser,
+                        isUser: isUser,
                       );
                     },
                   ),
@@ -403,6 +453,11 @@ class BottomSheetWidgetState extends State<BottomSheetWidget> {
     'assets/images/exe.jpg',
     'assets/images/mood.png',
   ];
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   Widget _buildButton(String title, String image, String w) {
     return Card(
@@ -560,6 +615,11 @@ class CalendarViewState extends State<CalendarView> {
     _events = {};
     _isLoading = false;
     _fetchEvents();
+  }
+
+@override
+  void dispose() {
+    super.dispose();
   }
 
   String _formatDateComponent(int component) {
@@ -944,4 +1004,9 @@ Color getGradientColor(
   int b = (startColor.blue + (endColor.blue - startColor.blue) * ratio).toInt();
   Color gradientColor = Color.fromARGB(255, r, g, b);
   return gradientColor;
+}
+
+Future<bool> getNotificationPreference() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  return prefs.getBool(kNotificationPreferenceKey) ?? true;
 }

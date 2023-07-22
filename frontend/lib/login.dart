@@ -3,6 +3,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'register.dart';
 import 'request.dart';
 import 'main.dart';
 import 'other.dart';
@@ -50,10 +52,16 @@ class LoginPageState extends State<LoginPage> {
             await fetchLatestRecord(context);
             await fetchPlan(context);
             await fetchScores(context);
+            SharedPreferences sharedPreferences =
+                await SharedPreferences.getInstance();
+            await sharedPreferences.setBool('isLoggedIn', true);
             setState(() {
               _isLoading = false;
             });
-            Navigator.pushReplacementNamed(context, '/home');
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const MainPage()),
+            );
           } else {
             showAutoHideAlertDialog(context,
                 ["Authentication failed", "Incorrect username or password"]);
@@ -72,6 +80,7 @@ class LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.black,
         title: const Text(
           'Login',
@@ -95,6 +104,13 @@ class LoginPageState extends State<LoginPage> {
               ? const CircularProgressIndicator()
               : _buildLoginForm(),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
+        onPressed: () {
+          Navigator.pop(context);
+        },
+        child: const Icon(Icons.arrow_back),
       ),
     );
   }
@@ -199,7 +215,11 @@ class LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   onPressed: () {
-                    Navigator.pushNamed(context, '/register');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const RegisterPage()),
+                    );
                   },
                   child: const Text('REGISTER'),
                 ),

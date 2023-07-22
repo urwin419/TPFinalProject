@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:group_project/login.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
@@ -206,7 +207,10 @@ class RegisterPageState extends State<RegisterPage> {
 
       if (response.statusCode == 200) {
         if (response.body == "Successfully register!") {
-          Navigator.pushReplacementNamed(context, '/');
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
         } else if (response.body == "Email has been registered!") {
           showAutoHideAlertDialog(
               context, ["Registration failed", "Email has been registered!"]);
@@ -225,6 +229,7 @@ class RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.black,
         title: const Text(
           'Register',
@@ -248,6 +253,13 @@ class RegisterPageState extends State<RegisterPage> {
               ? const CircularProgressIndicator()
               : _buildRegisterForm(),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green,
+        onPressed: () {
+          Navigator.pop(context);
+        },
+        child: const Icon(Icons.arrow_back),
       ),
     );
   }

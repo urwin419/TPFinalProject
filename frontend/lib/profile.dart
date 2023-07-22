@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'main.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -16,6 +17,7 @@ class ProfilePage extends StatefulWidget {
 
 class ProfilePageState extends State<ProfilePage> {
   bool healthRating = false;
+  bool notificationPreference = true;
   double currentHeight = latestRecord['body']['height'];
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -90,10 +92,28 @@ class ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  void saveNotificationPreference(bool value) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(kNotificationPreferenceKey, value);
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        content: const Text('You have changed your Scoring Preference!'),
+        actions: <TextButton>[
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Close'),
+          )
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Prizes',
         theme: ThemeData(
           primaryColor: Colors.green[900],
           scaffoldBackgroundColor: Colors.green[800],
@@ -126,6 +146,7 @@ class ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                         trailing: Switch(
+                          activeColor: Colors.green,
                           value: healthRating,
                           onChanged: (newValue) {
                             setState(() {
@@ -136,6 +157,32 @@ class ProfilePageState extends State<ProfilePage> {
                         ),
                         subtitle:
                             const Text('Set the way we score you health.'),
+                      ),
+                    )),
+                Opacity(
+                    opacity: 0.8,
+                    child: Card(
+                      elevation: 2.0,
+                      child: ListTile(
+                        title: const Text(
+                          'Notification Preferrence',
+                          style: TextStyle(
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        trailing: Switch(
+                          activeColor: Colors.green,
+                          value: notificationPreference,
+                          onChanged: (newValue) {
+                            setState(() {
+                              notificationPreference = newValue;
+                            });
+                            saveNotificationPreference(newValue);
+                          },
+                        ),
+                        subtitle: const Text(
+                            'Do you wish to receive notifications from us?'),
                       ),
                     )),
                 Opacity(

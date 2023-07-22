@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:number_text_input_formatter/number_text_input_formatter.dart';
 import 'package:http/http.dart' as http;
 import 'package:table_calendar/table_calendar.dart';
+import 'notification.dart';
 import 'records.dart';
 import 'profile.dart';
 import 'request.dart';
@@ -25,30 +26,47 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'other.dart';
 
-void main() {
-  HttpOverrides.global = MyHttpOverrides();
-  runApp(const MyApp());
-}
-
 const serverUrl = 'https://18.162.169.56:23718';
 Map<String, dynamic> latestRecord = {};
 Map<String, dynamic> plan = {};
 Map<String, dynamic> scores = {};
 const storage = FlutterSecureStorage();
+const String kNotificationPreferenceKey = 'notification_preference';
+
+void main() {
+  HttpOverrides.global = MyHttpOverrides();
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const HomePage(),
-        '/login': (context) => const LoginPage(),
-        '/register': (context) => const RegisterPage(),
-        '/home': (context) => const MainPage(),
-      },
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+      ),
+      home: FutureBuilder<bool>(
+        future: _checkLoginStatus(),
+        builder: (context, snapshot) {
+          try {
+            if (snapshot.hasData && snapshot.data == true) {
+              return const HomePage();
+            } else {
+              return const HomePage();
+            }
+          } catch (e) {
+            return const HomePage();
+          }
+        },
+      ),
     );
+  }
+
+  Future<bool> _checkLoginStatus() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    return sharedPreferences.getBool('isLoggedIn') ?? false;
   }
 }
 
@@ -59,6 +77,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.black,
       ),
       body: Container(
@@ -110,7 +129,10 @@ class HomePage extends StatelessWidget {
               ),
             ),
             onPressed: () {
-              Navigator.pushReplacementNamed(context, '/login');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
             },
           ),
         ),
@@ -144,7 +166,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     'Prizes',
     'Logout'
   ];
-
   late final List<AnimationController> _controllers = [];
   bool shouldShowButton = false;
 
@@ -205,6 +226,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   }
 
   Widget _main() {
+    scheduleNotifications();
     return Column(
       children: [
         SizedBox(
@@ -237,17 +259,16 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
-                _buildPlanItem('Bed Time', plan['bed_time']),
                 _buildPlanItem('Breakfast Time', plan['breakfast_time']),
-                _buildPlanItem('Dinner Time', plan['dinner_time']),
-                _buildPlanItem(
-                    'Exercise Amount', '${plan['exercise_amount']} min'),
                 _buildPlanItem('Lunch Time', plan['lunch_time']),
-                _buildPlanItem('Plan Date', plan['plan_date']),
-                _buildPlanItem('Start Weight', '${plan['start_weight']} kg'),
+                _buildPlanItem('Dinner Time', plan['dinner_time']),
+                _buildPlanItem('Bed Time', plan['bed_time']),
                 _buildPlanItem('Wake Up Time', plan['wake_up_time']),
                 _buildPlanItem('Water Intake', '${plan['water']} ml'),
+                _buildPlanItem('Start Weight', '${plan['start_weight']} kg'),
                 _buildPlanItem('Current Weight', '${plan['weight']} kg'),
+                _buildPlanItem(
+                    'Exercise Amount', '${plan['exercise_amount']} min'),
               ],
             ),
           ),
@@ -275,7 +296,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                             builder: (context) => const ViewAllPage()),
                       );
                     },
-                    child: const Text('View All'),
+                    child: const Text(
+                      'More',
+                      style: TextStyle(
+                        color: Colors.green,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -385,7 +411,13 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                 );
               }
               if (index == 3) {
-                Navigator.pushReplacementNamed(context, '/');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomePage()),
+                );
+                SharedPreferences sharedPreferences =
+                    await SharedPreferences.getInstance();
+                await sharedPreferences.remove('isLoggedIn');
                 await storage.write(key: 'cookie', value: '');
               }
             },
@@ -435,6 +467,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('RecFit System'),
         backgroundColor: Colors.green,
       ),
