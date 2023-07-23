@@ -4,7 +4,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:group_project/request.dart';
 import 'package:intl/intl.dart';
@@ -32,7 +31,7 @@ class ViewAllPageState extends State<ViewAllPage> {
     super.initState();
   }
 
-@override
+  @override
   void dispose() {
     super.dispose();
   }
@@ -107,7 +106,7 @@ class ViewAllPageState extends State<ViewAllPage> {
                 children: [
                   TextButton(
                     child: const Text(
-                      'All',
+                      'Show All',
                       style: TextStyle(
                         color: Colors.green,
                       ),
@@ -173,44 +172,49 @@ class ViewAllPageState extends State<ViewAllPage> {
         title: const Text('View All Records'),
         backgroundColor: Colors.green,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildHealthScoreModule(),
-          _buildRecordModule(
-              label: 'Weight',
-              type: 'body',
-              prefix: latestRecord['body']['date'].toString(),
-              value: '${latestRecord['body']['weight']} kg',
-              score: scores["bmi"].toInt().toString()),
-          _buildRecordModule(
-              label: 'MealTiming',
-              type: 'meal',
-              prefix: '${latestRecord['meal']['meal_date']}',
-              value:
-                  '\nBreakfast Time: ${latestRecord['meal']['breakfast_time']}\nLunch Time: ${latestRecord['meal']['lunch_time']}\nDinner Time: ${latestRecord['meal']['dinner_time']}',
-              score: scores["meal"].toInt().toString()),
-          _buildRecordModule(
-              label: 'Exercise',
-              type: 'exercise',
-              prefix: latestRecord['exercise']['exercise_time'],
-              value:
-                  '\n${latestRecord['exercise']['exercise_type']} for ${latestRecord['exercise']['exercise_amount']} mins',
-              score: scores["exercise"].toInt().toString()),
-          _buildRecordModule(
-              label: 'Water',
-              type: 'water',
-              prefix: latestRecord['water']['drinking_time'],
-              value: '${latestRecord['water']['drinking_volume']} ml',
-              score: scores["water"].toInt().toString()),
-          _buildRecordModule(
-              label: 'Sleep',
-              type: 'sleep',
-              prefix: 'Sleep',
-              value:
-                  'from ${latestRecord['sleep']['bed_time']} \nto ${latestRecord['sleep']['wake_up_time']}',
-              score: scores["sleep"].toInt().toString()),
-        ],
+      body: Container(
+        decoration: const BoxDecoration(
+          color: Color.fromARGB(255, 211, 230, 239),
+        ),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildHealthScoreModule(),
+            _buildRecordModule(
+                label: 'Weight',
+                type: 'body',
+                prefix: latestRecord['body']['date'].toString(),
+                value: '${latestRecord['body']['weight']} kg',
+                score: scores["bmi"].toInt().toString()),
+            _buildRecordModule(
+                label: 'MealTiming',
+                type: 'meal',
+                prefix: '${latestRecord['meal']['meal_date']}',
+                value:
+                    '\nBreakfast Time: ${latestRecord['meal']['breakfast_time']}\nLunch Time: ${latestRecord['meal']['lunch_time']}\nDinner Time: ${latestRecord['meal']['dinner_time']}',
+                score: scores["meal"].toInt().toString()),
+            _buildRecordModule(
+                label: 'Exercise',
+                type: 'exercise',
+                prefix: latestRecord['exercise']['exercise_time'],
+                value:
+                    '\n${latestRecord['exercise']['exercise_type']} for ${latestRecord['exercise']['exercise_amount']} mins',
+                score: scores["exercise"].toInt().toString()),
+            _buildRecordModule(
+                label: 'Water',
+                type: 'water',
+                prefix: latestRecord['water']['drinking_time'],
+                value: '${latestRecord['water']['drinking_volume']} ml',
+                score: scores["water"].toInt().toString()),
+            _buildRecordModule(
+                label: 'Sleep',
+                type: 'sleep',
+                prefix: 'Sleep',
+                value:
+                    'from ${latestRecord['sleep']['bed_time']} \nto ${latestRecord['sleep']['wake_up_time']}',
+                score: scores["sleep"].toInt().toString()),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.green,
@@ -265,7 +269,6 @@ class ChatPageState extends State<ChatPage> {
         List qaHistory = jsonData['history'];
         if (qaHistory.isNotEmpty) {
           chatHistory = qaHistory;
-          
         } else {
           chatHistory = [
             {
@@ -286,7 +289,7 @@ class ChatPageState extends State<ChatPage> {
     }
   }
 
-  void postAnswer(question) async {
+  void postQuestion(question) async {
     setState(() {
       _isLoading = true;
     });
@@ -319,7 +322,7 @@ class ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _refreshChatHistory() async {
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 1));
 
     setState(() {
       fetchQAHistory();
@@ -342,14 +345,15 @@ class ChatPageState extends State<ChatPage> {
                     reverse: true,
                     itemCount: chatHistory.length * 2,
                     itemBuilder: (BuildContext context, int index) {
-                      final chat =
-                          chatHistory[(chatHistory.length - 1) - (index ~/ 2)];
-                      final bool isUser = index % 2 == 1;
-                      if (isUser && chat['answer'] == null) {
+                      // final chat =
+                      //     chatHistory[(chatHistory.length - 1) - (index ~/ 2)];
+                      final chat = chatHistory[index ~/ 2];
+                      final bool isUser = index % 2 == 0;
+                      if (!isUser && chat['answer'] == null) {
                         return Container();
                       }
                       final String message =
-                          isUser ? chat['question']! : chat['answer']!;
+                          isUser ? chat['answer']! : chat['question']!;
                       return Bubble(
                         message: message,
                         isUser: isUser,
@@ -377,7 +381,7 @@ class ChatPageState extends State<ChatPage> {
                           String userMessage =
                               _textEditingController.text.trim();
                           setState(() {
-                            postAnswer(userMessage);
+                            postQuestion(userMessage);
                             fetchQAHistory();
                             _textEditingController.clear();
                           });
@@ -461,6 +465,9 @@ class BottomSheetWidgetState extends State<BottomSheetWidget> {
 
   Widget _buildButton(String title, String image, String w) {
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15.0),
+      ),
       child: InkWell(
         onTap: () {
           switch (w) {
@@ -511,6 +518,8 @@ class BottomSheetWidgetState extends State<BottomSheetWidget> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Expanded(
+                child: ClipRRect(
+              borderRadius: BorderRadius.circular(15.0),
               child: Container(
                 decoration: BoxDecoration(
                   image: DecorationImage(
@@ -519,7 +528,7 @@ class BottomSheetWidgetState extends State<BottomSheetWidget> {
                   ),
                 ),
               ),
-            ),
+            )),
             const SizedBox(height: 10),
             Text(
               title,
@@ -543,7 +552,10 @@ class BottomSheetWidgetState extends State<BottomSheetWidget> {
     return Container(
       height: targetHeight,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        image: DecorationImage(
+          image: AssetImage("assets/images/recordback.png"),
+          fit: BoxFit.cover,
+        ),
       ),
       child: Column(
         children: [
@@ -617,7 +629,7 @@ class CalendarViewState extends State<CalendarView> {
     _fetchEvents();
   }
 
-@override
+  @override
   void dispose() {
     super.dispose();
   }

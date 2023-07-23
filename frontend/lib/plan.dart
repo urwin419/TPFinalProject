@@ -124,10 +124,7 @@ class PlanPagestate extends State<PlanPage> {
   Widget build(BuildContext context) {
     return MaterialApp(
         title: 'Prizes',
-        theme: ThemeData(
-          primaryColor: Colors.green[900],
-          scaffoldBackgroundColor: Colors.green[800],
-        ),
+        theme: ThemeData(),
         home: Scaffold(
           appBar: AppBar(
             title: const Text('Plan'),
@@ -135,14 +132,21 @@ class PlanPagestate extends State<PlanPage> {
           ),
           body: Container(
               decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage("assets/images/plan.png"),
-                  fit: BoxFit.cover,
-                ),
+                color: Color.fromARGB(255, 211, 230, 239),
               ),
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Container(
+                      height: 200,
+                      width: 200,
+                      decoration: const BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage("assets/images/calendar.png"),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
                     CardListItem(
                       icon: Icons.monitor_weight,
                       title: 'Weight',
@@ -489,13 +493,16 @@ class PlanPagestate extends State<PlanPage> {
                       },
                     ),
                     Padding(
-                        padding: const EdgeInsets.all(16.0), // 设置所需的填充值
+                        padding: const EdgeInsets.all(16.0),
                         child: ElevatedButton(
                           style: ButtonStyle(
                             backgroundColor:
                                 MaterialStateProperty.all<Color>(Colors.green),
                           ),
-                          child: const Text('Comfirm'),
+                          child: const Text('Comfirm',
+                              style: TextStyle(
+                                color: Colors.white,
+                              )),
                           onPressed: () {
                             if (completeness
                                 .every((element) => element == true)) {
@@ -528,14 +535,14 @@ class PlanPagestate extends State<PlanPage> {
                                         actions: [
                                           TextButton(
                                             onPressed: () {
-                                              Navigator.of(context).pop();
+                                              Navigator.pop(context);
                                             },
                                             child: const Text('CANCEL'),
                                           ),
                                           ElevatedButton(
                                             onPressed: () {
                                               _sendDataRequest();
-                                              Navigator.of(context).pop();
+                                              Navigator.pop(context);
                                             },
                                             child: const Text('SUBMIT'),
                                           ),
@@ -580,7 +587,7 @@ class CardListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Opacity(
-        opacity: 0.8, // 设置透明度为0.5，表示半透明
+        opacity: 0.8,
         child: Card(
           elevation: 2.0,
           child: ListTile(

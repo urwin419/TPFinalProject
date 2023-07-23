@@ -103,9 +103,9 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Health Monitoring & Exercise Recording Application \n with Intelligent Assistant Based on BERT Model',
+                  'Your all-round health butler!',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: Color.fromARGB(255, 55, 54, 54),
                   ),
@@ -191,6 +191,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
   void _onNavItemTapped(int index) async {
     await fetchScores(context);
+    await fetchPlan(context);
     setState(() {
       _selectedIndex = index;
 
@@ -229,112 +230,191 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     scheduleNotifications();
     return Column(
       children: [
-        SizedBox(
-          height: MediaQuery.of(context).size.height * 0.25,
-          child: const Center(
-            child: Text(
-              'Make your plan, and stick to it!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+        const Divider(
+          height: 8,
+          color: Colors.grey,
+        ),
+        Padding(
+            padding: const EdgeInsets.all(8),
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.2,
+              decoration: BoxDecoration(
                 color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
               ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(16),
-            child: ListView(
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: const Text(
-                    'Your Health Plan',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                _buildPlanItem('Breakfast Time', plan['breakfast_time']),
-                _buildPlanItem('Lunch Time', plan['lunch_time']),
-                _buildPlanItem('Dinner Time', plan['dinner_time']),
-                _buildPlanItem('Bed Time', plan['bed_time']),
-                _buildPlanItem('Wake Up Time', plan['wake_up_time']),
-                _buildPlanItem('Water Intake', '${plan['water']} ml'),
-                _buildPlanItem('Start Weight', '${plan['start_weight']} kg'),
-                _buildPlanItem('Current Weight', '${plan['weight']} kg'),
-                _buildPlanItem(
-                    'Exercise Amount', '${plan['exercise_amount']} min'),
-              ],
-            ),
-          ),
-        ),
-        Container(
-          color: Colors.white,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  const Text(
-                    'Health Score',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(
+                          'Make Your Plan',
+                          style: TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                          textAlign: TextAlign.left,
+                        ),
+                      ),
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const ViewAllPage()),
-                      );
-                    },
-                    child: const Text(
-                      'More',
-                      style: TextStyle(
-                        color: Colors.green,
+                  Align(
+                    alignment: Alignment.center,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        '&',
+                        style: TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(
+                          'Stick To It!',
+                          style: TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                          textAlign: TextAlign.left,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
-              SizedBox(
-                width: 150,
-                height: 150,
-                child: Center(
-                  child: Stack(
+            )),
+        const Divider(
+          height: 8,
+          color: Colors.grey,
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: ListView(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: const Text(
+                      'Your Health Plan',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  _buildPlanItem('Breakfast Time', plan['breakfast_time']),
+                  _buildPlanItem('Lunch Time', plan['lunch_time']),
+                  _buildPlanItem('Dinner Time', plan['dinner_time']),
+                  _buildPlanItem('Bed Time', plan['bed_time']),
+                  _buildPlanItem('Wake Up Time', plan['wake_up_time']),
+                  _buildPlanItem('Water Intake', '${plan['water']} ml'),
+                  _buildPlanItem('Start Weight', '${plan['start_weight']} kg'),
+                  _buildPlanItem('Current Weight', '${plan['weight']} kg'),
+                  _buildPlanItem(
+                      'Exercise Amount', '${plan['exercise_amount']} min/week'),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const Divider(
+          height: 8,
+          color: Colors.grey,
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Container(
+            height: 200,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            padding: const EdgeInsetsDirectional.symmetric(horizontal: 8),
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 30,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      CustomPaint(
-                        painter: ThreeQuarterCircularProgressPainter(
-                          progress: scores["total_score"].toInt() / 100,
-                          backgroundColor: Colors.white,
-                          progressColor: getGradientColor(
-                              scores["total_score"].toInt(),
-                              0,
-                              100,
-                              Colors.red,
-                              Colors.green),
-                          strokeWidth: 10.0,
-                          fontSize: 24.0,
+                      const Text(
+                        'Health Score',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
                         ),
-                        size: const Size.square(100),
-                      )
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const ViewAllPage()),
+                          );
+                        },
+                        child: const Text(
+                          'More',
+                          style: TextStyle(
+                            color: Colors.green,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(
-                height: 20,
-              )
-            ],
+                CustomPaint(
+                  painter: ThreeQuarterCircularProgressPainter(
+                    progress: scores["total_score"].toInt() / 100,
+                    backgroundColor: Colors.white,
+                    progressColor: getGradientColor(
+                        scores["total_score"].toInt(),
+                        0,
+                        100,
+                        Colors.red,
+                        Colors.green),
+                    strokeWidth: 10.0,
+                    fontSize: 24.0,
+                  ),
+                  size: const Size.square(100),
+                ),
+              ],
+            ),
           ),
+        ),
+        const Divider(
+          height: 8,
+          color: Colors.grey,
         ),
       ],
     );
@@ -463,6 +543,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     );
   }
 
+  Future<void> _refreshPage() async {
+    await Future.delayed(const Duration(seconds: 1));
+
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -480,7 +566,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         ),
         child: selectedWidget,
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: shouldShowButton
+          ? FloatingActionButtonLocation.centerDocked
+          : FloatingActionButtonLocation.endTop,
       floatingActionButton: shouldShowButton
           ? FloatingActionButton(
               backgroundColor: Colors.green,
@@ -507,7 +595,25 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                   },
                 );
               })
-          : null,
+          : Container(
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.8),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+                shape: BoxShape.circle,
+              ),
+              child: FloatingActionButton(
+                  backgroundColor: Colors.green[700],
+                  elevation: 8.0,
+                  child: const Icon(Icons.refresh),
+                  onPressed: () {
+                    _refreshPage();
+                  })),
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
         child: Row(
