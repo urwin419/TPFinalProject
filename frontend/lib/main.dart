@@ -76,10 +76,6 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.black,
-      ),
       body: Container(
           decoration: const BoxDecoration(
             image: DecorationImage(
@@ -98,12 +94,12 @@ class HomePage extends StatelessWidget {
                       fit: BoxFit.cover,
                     ),
                   ),
-                  width: 250,
-                  height: 250,
+                  width: 300,
+                  height: 300,
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Your all-round health butler!',
+                  'Your all-round health builder!',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -554,9 +550,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: shouldShowButton
-            ? const Text('VitaTracker')
-            : const Text('CareAI'),
+        title:
+            shouldShowButton ? const Text('VitaTracker') : const Text('CareAI'),
         backgroundColor: Colors.green,
       ),
       body: Container(
