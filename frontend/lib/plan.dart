@@ -86,15 +86,15 @@ class PlanPagestate extends State<PlanPage> {
   Future<void> _sendDataRequest() async {
     Map<String, dynamic> data = {
       "plan_date": _currentDate,
-      "weight": _weightController.text,
-      "breakfast_time": _breakfastController.text,
-      "lunch_time": _lunchController.text,
-      "dinner_time": _dinnerController.text,
-      "exercise_amount": _exetimeController.text,
-      "water": _waterController.text,
-      "bed_time": _sleepController.text,
-      "wake_up_time": _wakeController.text,
-      "start_weight": _startweightController.text,
+      "weight": _weightController.text.trim(),
+      "breakfast_time": _breakfastController.text.trim(),
+      "lunch_time": _lunchController.text.trim(),
+      "dinner_time": _dinnerController.text.trim(),
+      "exercise_amount": _exetimeController.text.trim(),
+      "water": _waterController.text.trim(),
+      "bed_time": _sleepController.text.trim(),
+      "wake_up_time": _wakeController.text.trim(),
+      "start_weight": _startweightController.text.trim(),
     };
     String body = json.encode(data);
     String? cookieValue = await storage.read(key: 'cookie');

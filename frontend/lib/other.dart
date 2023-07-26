@@ -348,12 +348,12 @@ class ChatPageState extends State<ChatPage> {
                       // final chat =
                       //     chatHistory[(chatHistory.length - 1) - (index ~/ 2)];
                       final chat = chatHistory[index ~/ 2];
-                      final bool isUser = index % 2 == 0;
+                      final bool isUser = index % 2 == 1;
                       if (!isUser && chat['answer'] == null) {
                         return Container();
                       }
                       final String message =
-                          isUser ? chat['answer']! : chat['question']!;
+                          isUser ? chat['question']! : chat['answer']!;
                       return Bubble(
                         message: message,
                         isUser: isUser,
@@ -807,7 +807,6 @@ class ThreeQuarterCircularProgressPainter extends CustomPainter {
     double radius = size.width / 2;
     Offset center = Offset(size.width / 2, size.height);
 
-    // 背景圆环
     Paint backgroundPaint = Paint()
       ..color = backgroundColor
       ..strokeWidth = strokeWidth
@@ -820,7 +819,6 @@ class ThreeQuarterCircularProgressPainter extends CustomPainter {
       backgroundPaint,
     );
 
-    // 进度圆弧
     Paint progressPaint = Paint()
       ..color = progressColor
       ..strokeWidth = strokeWidth
@@ -834,7 +832,6 @@ class ThreeQuarterCircularProgressPainter extends CustomPainter {
       progressPaint,
     );
 
-    // 进度文本
     TextPainter textPainter = TextPainter(
       text: TextSpan(
         text: (progress * 100).toInt().toString(),

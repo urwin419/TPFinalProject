@@ -450,57 +450,57 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       padding: const EdgeInsets.all(16),
       itemCount: entries3.length,
       itemBuilder: (BuildContext context, int index) {
-        return Container(
-          width: 200.0,
-          height: 120.0,
-          decoration: BoxDecoration(
-            image: const DecorationImage(
-              image: AssetImage("assets/images/login.png"),
-              fit: BoxFit.cover,
-            ),
-            color: Colors.blue[300],
-            borderRadius: BorderRadius.circular(12.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 2,
-                blurRadius: 5,
-                offset: const Offset(0, 3),
+        return GestureDetector(
+          onTap: () async {
+            if (index == 0) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PlanPage()),
+              );
+            }
+            if (index == 1) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
+              );
+            }
+            if (index == 2) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const AchievementsPage()),
+              );
+            }
+            if (index == 3) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HomePage()),
+              );
+              SharedPreferences sharedPreferences =
+                  await SharedPreferences.getInstance();
+              await sharedPreferences.remove('isLoggedIn');
+              await storage.write(key: 'cookie', value: '');
+            }
+          },
+          child: Container(
+            width: 200.0,
+            height: 120.0,
+            decoration: BoxDecoration(
+              image: const DecorationImage(
+                image: AssetImage("assets/images/login.png"),
+                fit: BoxFit.cover,
               ),
-            ],
-          ),
-          child: GestureDetector(
-            onTap: () async {
-              if (index == 0) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const PlanPage()),
-                );
-              }
-              if (index == 1) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfilePage()),
-                );
-              }
-              if (index == 2) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const AchievementsPage()),
-                );
-              }
-              if (index == 3) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HomePage()),
-                );
-                SharedPreferences sharedPreferences =
-                    await SharedPreferences.getInstance();
-                await sharedPreferences.remove('isLoggedIn');
-                await storage.write(key: 'cookie', value: '');
-              }
-            },
+              color: Colors.blue[300],
+              borderRadius: BorderRadius.circular(12.0),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.5),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
             child: Center(
               child: Text(
                 ' ${entries3[index]}',
@@ -554,7 +554,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('RecFit System'),
+        title: shouldShowButton
+            ? const Text('VitaTracker')
+            : const Text('CareAI'),
         backgroundColor: Colors.green,
       ),
       body: Container(

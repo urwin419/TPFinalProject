@@ -32,8 +32,8 @@ class LoginPageState extends State<LoginPage> {
         _isLoading = true;
       });
       Map<String, dynamic> data = {
-        'email': _emailController.text,
-        'password': _passwordController.text
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text.trim()
       };
       String body = json.encode(data);
       try {

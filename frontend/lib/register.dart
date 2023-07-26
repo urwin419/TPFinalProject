@@ -184,11 +184,11 @@ class RegisterPageState extends State<RegisterPage> {
       }
 
       Map<String, dynamic> data = {
-        'email': _emailController.text,
-        'username': _usernameController.text,
-        'password': _passwordController.text,
-        "password_confirmed": _confirmPasswordController.text,
-        'captcha': _verificationCodeController.text
+        'email': _emailController.text.trim(),
+        'username': _usernameController.text.trim(),
+        'password': _passwordController.text.trim(),
+        "password_confirmed": _confirmPasswordController.text.trim(),
+        'captcha': _verificationCodeController.text.trim()
       };
 
       String body = json.encode(data);

@@ -104,7 +104,7 @@ class WaterTrackerWidgetState extends State<WaterTrackerWidget> {
     return Scaffold(
         appBar: AppBar(
           title: const Text('Record your water intakes'),
-          backgroundColor: Colors.blue,
+          backgroundColor: Colors.green,
         ),
         body: Container(
             color: Colors.blue[100],
@@ -362,7 +362,7 @@ class SleepRecordPageState extends State<SleepRecordPage> {
         showAutoHideAlertDialog(context, ["Request Failed"]);
       }
     } catch (e) {
-      showAutoHideAlertDialog(context, ["Failed", "Server unavailable now"]);
+      throw Exception('Unexpected error occured!');
     }
   }
 
@@ -371,7 +371,7 @@ class SleepRecordPageState extends State<SleepRecordPage> {
     return Scaffold(
         appBar: AppBar(
           title: const Text('Sleep Record'),
-          backgroundColor: Colors.blue,
+          backgroundColor: Colors.green,
         ),
         body: Container(
             decoration: BoxDecoration(
@@ -659,7 +659,7 @@ class WeightRecordPageState extends State<WeightRecordPage> {
         ),
       );
     } else {
-      showAutoHideAlertDialog(context, ["Request Failed"]);
+      throw Exception('Unexpected error occured!');
     }
   }
 
@@ -873,10 +873,10 @@ class MealRecordPageState extends State<MealRecordPage> {
           ),
         );
       } else {
-        showAutoHideAlertDialog(context, ["Request Failed"]);
+        throw Exception('Unexpected error occured!');
       }
     } catch (e) {
-      showAutoHideAlertDialog(context, ["Failed", "Server unavailable now"]);
+      throw Exception('Unexpected error occured!');
     }
   }
 
@@ -1071,10 +1071,10 @@ class ExeRecordPageState extends State<ExeRecordPage> {
           exercised = data['week_exercise_amount'];
         });
       } else {
-        showAutoHideAlertDialog(context, ["Request Failed"]);
+        throw Exception('Unexpected error occured!');
       }
     } catch (e) {
-      showAutoHideAlertDialog(context, ["Failed", "Server unavailable now"]);
+      throw Exception('Unexpected error occured!');
     }
   }
 
@@ -1171,7 +1171,7 @@ class ExeRecordPageState extends State<ExeRecordPage> {
     return Scaffold(
         appBar: AppBar(
           title: const Text('Meal Timing Record'),
-          backgroundColor: Colors.greenAccent,
+          backgroundColor: Colors.green,
         ),
         body: Container(
             decoration: const BoxDecoration(
@@ -1469,10 +1469,10 @@ class MoodPageState extends State<MoodPage> {
             ),
           );
         } else {
-          showAutoHideAlertDialog(context, ["Request Failed"]);
+          throw Exception('Unexpected error occured!');
         }
       } catch (e) {
-        showAutoHideAlertDialog(context, ["Failed", "Server unavailable now"]);
+        throw Exception('Unexpected error occured!');
       }
     }
   }
