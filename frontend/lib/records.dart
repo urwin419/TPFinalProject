@@ -1170,7 +1170,7 @@ class ExeRecordPageState extends State<ExeRecordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Meal Timing Record'),
+          title: const Text('Exercise Record'),
           backgroundColor: Colors.green,
         ),
         body: Container(
