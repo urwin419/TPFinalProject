@@ -1,0 +1,22 @@
+
+# hash salt
+SECURITY_KEY = "aodhaoiheare"
+SECRET_KEY = "15616131"
+
+# Database Configuration
+HOSTNAME = "127.0.0.1" # ip address of your database
+PORT = 3306 # default port for MySQL
+USERNAME = "[YOUR DATABASE USERNAME]"
+PASSWORD = "[YOUR DATABASE PASSWORD]"
+DATABASE = "[YOUR DATABASE NAME]"
+
+DB_URI = f"mysql+pymysql://{USERNAME}:{PASSWORD}@{HOSTNAME}:{PORT}/{DATABASE}?charset=utf8mb4"
+SQLALCHEMY_DATABASE_URI = DB_URI
+
+# Mail Configuration
+MAIL_SERVER = "[YOUR MAIL SERVER]"
+MAIL_USE_SSL = True
+MAIL_PORT = 465 # port of mail server
+MAIL_USERNAME = "[YOUR MAIL USERNAME]"
+MAIL_PASSWORD = "[YOUR MAIL PASSWORD]"
+MAIL_DEFAULT_SENDER = "[YOUR MAIL SENDER]"
