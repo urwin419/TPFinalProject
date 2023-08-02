@@ -27,6 +27,8 @@ app.register_blueprint(test_bp)
 def before_request():
     id_user = session.get("id_user")
     setattr(g, "user", session.get(UserModel, id_user) if id_user else None)
+    setattr(g, "duration", session.get("duration"))
+    setattr(g, "ip", session.get("ip"))
 
 
 if __name__ == '__main__':

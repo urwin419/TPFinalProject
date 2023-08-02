@@ -25,6 +25,9 @@ def login():
     user = UserModel.query.filter_by(email=email).first()
     if user and check_password_hash(user.password, password):
         session["id_user"] = user.id_user
+        session["duration"] = (datetime.datetime.now() + datetime.timedelta(hours=12)).isoformat()
+        session["ip"] = request.remote_addr
+        r.set(f"{user.id_user}_ip", request.remote_addr)
         return "Successfully login!"
     else:
         return "Wrong email or password!"
